@@ -8,8 +8,9 @@ with open('sample_games/random_game.json') as f:
 df = pd.DataFrame(data)
 
 axs=[]
+times = df['t'].unique()[:-1]
 
-for t in df['t'].unique():
+for t in times:
     sub_df = df[df['t'] == t]
     players = sub_df[sub_df['ty']==0]
     bullets = sub_df[sub_df['ty']==1]
@@ -33,6 +34,9 @@ for t in df['t'].unique():
     plt.axis('off')
     ax.set_title(f't={t}')
     plt.savefig(f'plots/{t}.png')
-    plt.show()
+
+import imageio
+ims = [imageio.imread(f'plots/{t}.png') for t in times]
+imageio.mimwrite("plots/animation.gif", ims)
 
 # %%
