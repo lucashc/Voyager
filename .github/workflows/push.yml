@@ -4,6 +4,8 @@ on: [push]
 
 jobs:
   upload:
+    runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v2
     - name: "Send code"
