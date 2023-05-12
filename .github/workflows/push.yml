@@ -1,12 +1,23 @@
-name: "Upload agent code on push"
+name: "Upload agent code"
 
 on: [push]
 
 jobs:
   upload:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
-    - name: "Send code"
+    - name: Send code
       run: python3 scripts/post.py main.lua
+  add-feedback-comment:
+    needs: upload
+    runs-on: ubuntu-latest
+    steps:
+    - name: Collect feedback
+      run: |
+        echo "# Auto-generated feedback" >> $GITHUB_OUTPUT
+        python3 scripts/test_feedback.py >> $GITHUB_OUTPUT
+    - name: Create commit comment
+      uses: peter-evans/commit-comment@v2
+      with:
+        body: ${{ steps.add-feedback-comment.outputs.comment }}
