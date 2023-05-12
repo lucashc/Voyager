@@ -18,20 +18,24 @@ def check_recent_games(token, timestamp):
 
 
 def main():
+    print("## Summary Script")
     current_time = datetime.now()
-    print(f"Current time is: {current_time}")
+    print(f"- [x] Current time is: {current_time}")
     timestamp = current_time.timestamp()
 
     token = login_and_get_token()
-    print("Successfully logged in")
-
+    print("- [x] Successfully logged in")
+    print("- [x] Waiting for new games, ", end="")
     while not (game := check_recent_games(token, timestamp)):
-        print(f"No new games found, waiting {WAIT_TIMEOUT} seconds")
+        print(".", end="")
         time.sleep(WAIT_TIMEOUT.seconds)
+    print()
 
-    print(f"Found game: {game['id']}")
+    print(f"- [x] Found game: {game['id']}")
     game_data = fetch_game(token, game["id"])
 
+    print()
+    print("### Game Analysis")
     analyse_game(game_data)
 
 
