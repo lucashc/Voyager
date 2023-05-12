@@ -1,0 +1,10 @@
+name: "Upload agent code on push"
+
+on: [push]
+
+jobs:
+  upload:
+    steps:
+    - uses: actions/checkout@v2
+    - name: "Send code"
+      run: python3 scripts/post.py main.lua
