@@ -19,7 +19,7 @@ jobs:
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "feedback<<$EOF" >> "$GITHUB_OUTPUT"
         echo "# Auto-generated feedback" >> "$GITHUB_OUTPUT"
-        python3 scripts/test_feedback.py >> "$GITHUB_OUTPUT"
+        python3 scripts/summary.py >> "$GITHUB_OUTPUT"
         echo "$EOF" >> "$GITHUB_OUTPUT"
       id: generate-commit-message
     - name: Create commit comment
