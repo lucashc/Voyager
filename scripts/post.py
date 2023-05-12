@@ -8,7 +8,6 @@ LOGIN_URL = "https://sqlillo.dziban.net/api/login"
 CODE_URL = "https://sqlillo.dziban.net/api/private/codes"
 
 
-
 def load_credentials():
     current_file = __file__
     base_path = os.path.dirname(current_file)
@@ -31,7 +30,9 @@ def login_and_get_token():
 def post_code(file_name, token):
     with open(file_name, "r") as f:
         code = f.read()
-    r = requests.post(CODE_URL, json={"code": code}, headers={"Authorization": f"Bearer {token}"})
+    r = requests.post(
+        CODE_URL, json={"code": code}, headers={"Authorization": f"Bearer {token}"}
+    )
     if not r.status_code == 200:
         raise ConnectionError("Post failed")
     else:
@@ -46,6 +47,7 @@ def main(file_name):
     result = post_code(file_name, token)
     # Print result
     print(f"Posted code with id {result['id']} and user {result['username']}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
