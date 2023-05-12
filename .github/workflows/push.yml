@@ -13,6 +13,7 @@ jobs:
     needs: upload
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2
     - name: Collect feedback
       run: |
         echo "# Auto-generated feedback" >> $GITHUB_OUTPUT
