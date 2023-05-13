@@ -263,7 +263,7 @@ function update_others_bullets(me)
                     position = bullet_pos,
                     direction = direction
                 }
-                print("Adding bullet")
+                -- print("Adding bullet")
             -- Seen before
             else
                 bullets[id].position = bullet_pos
@@ -356,11 +356,11 @@ function find_best_pos(our_pos)
     return best_dir
 end
 
-local DANGER_PLAYER_DASH_COOLDOWN = 10
-local DANGER_PLAYER_PROXIMITY = 45
-local DANGER_PLAYER_DIRECTION = 15
-local DANGER_PLAYER_AGGRESSIVE = 15
-local DANGER_PLAYER_MOBILITY = 15
+local DANGER_PLAYER_DASH_COOLDOWN = 0.10
+local DANGER_PLAYER_PROXIMITY = 0.45
+local DANGER_PLAYER_DIRECTION = 0.15
+local DANGER_PLAYER_AGGRESSIVE = 0.15
+local DANGER_PLAYER_MOBILITY = 0.15
 
 -- Evaluate other players
 -- - cooldown: (max_cooldown - player_cooldown) / max_cooldown
@@ -419,25 +419,46 @@ function next_cod(ticks, radius)
 end
 
 
-local DANGER_COD = 100
-
 -- Evaluate COD
 -- @return The score of the COD
 function score_danger_cod(me, current_position)
-    -- TODO: fill with tick counter
-    time = 0
     radius = norm(current_position)
 
-    next_cod_time, next_cod_radius = next_cod(time, radius)
+    next_cod_time, next_cod_radius = next_cod(num_ticks, radius)
 
     if radius <= next_cod_radius then
         -- Inside future COD, safe for now
         return 0
     end
 
-    remaining_time = next_cod_time - time
+    remaining_time = next_cod_time - num_ticks
     time_to_reach_cod = (radius - next_cod_radius) / BASE_SPEED_PER_SECOND
-    return math.max(0, 1 - 0.3 * remaining_time / time_to_reach_cod) * DANGER_COD
+    return math.max(0, 1 - 0.3 * remaining_time / time_to_reach_cod)
+end
+
+-- Penalize wall distance
+function score_danger_walls(current_position)
+    local dist_x = 0
+    local dist_y = 0
+    local dist_to_wall = 0
+    local x = current_position:x()
+    local y = current_position:y()
+    
+    if x < FIELD_CENTER:x() then
+        dist_x = x 
+    else
+        dist_x = FIELD_SIZE - x 
+    end
+    if y < FIELD_CENTER:y() then
+        dist_y = y
+    else
+        dist_y = FIELD_SIZE - y 
+    end
+    dist_to_wall = math.min(dist_x, dist_y)
+    if dist_x < 20 and dist_y < 20 then 
+        dist_to_wall = dist_wall * 0.5
+    end
+    return 1 / (dist_to_wall+1) 
 end
 
 
@@ -454,9 +475,10 @@ local MOVE_DIRECTIONS = {
     STAY = vec.new(0, 0)
 }
 
-local PLAYER_DANGER_WEIGHT = 0.5
+local PLAYER_DANGER_WEIGHT = 0.8
 local COD_DANGER_WEIGHT = 0.5
-local BULLET_DANGER_WEIGHT = 2
+local BULLET_DANGER_WEIGHT = 1
+local WALL_DANGER_WEIGHT = 0.1
 
 function score_move(me, possible_position)
 
@@ -471,10 +493,13 @@ function score_move(me, possible_position)
     -- Evaluate COD
     cod_danger = score_danger_cod(me, possible_position)
 
-    print(player_danger)
-    print(cod_danger)
+    -- Evaluate walls
+    wall_danger = score_danger_walls(possible_position)
 
-    return PLAYER_DANGER_WEIGHT * player_danger + COD_DANGER_WEIGHT * cod_danger
+    -- print(player_danger)
+    -- print(cod_danger)
+
+    return PLAYER_DANGER_WEIGHT * player_danger + COD_DANGER_WEIGHT * cod_danger + WALL_DANGER_WEIGHT * wall_danger
 end
 
 
@@ -491,7 +516,7 @@ function determine_best_move(me, current_position)
             best_move = move
         end
     end
-    print(best_move)
+    -- print(best_move)
     return best_move
 end
 
