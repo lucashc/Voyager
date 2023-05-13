@@ -402,7 +402,7 @@ function score_danger_cod(me, current_position)
     local cod_center = vec.new(cod:x(), cod:y())
     local radius = vec.distance(current_position, cod_center)
 
-    local margin_radius = radius * 0.8
+    local margin_radius = cod:radius() * 0.8
 
     return math.exp(math.max(0, radius - margin_radius) / margin_radius * 2)
 end
@@ -504,7 +504,7 @@ end
 
 local PLAYER_DANGER_WEIGHT = 0 -- 0.5 -- 0.3
 local COD_DANGER_WEIGHT = 1
-local BULLET_DANGER_WEIGHT = 0
+local BULLET_DANGER_WEIGHT = 1
 local WALL_DANGER_WEIGHT = 0.0
 
 function score_move(me, possible_position)
@@ -608,7 +608,7 @@ function bot_main(me)
     local best_move = determine_best_move(me, me:pos(), BASE_SPEED_PER_TICK)
 
     -- Spell casting
-    local spell, direction = nil, nil -- spell_people(me)
+    local spell, direction = spell_people(me)
     if spell ~= nil then
         me:cast(spell, direction)
     end
