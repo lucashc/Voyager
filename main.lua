@@ -343,10 +343,6 @@ function score_danger_player(current_position, player)
 
     -- Dashing
     danger_score = (DASH_COOLDOWN - player.dash_cooldown) / DASH_COOLDOWN * DANGER_PLAYER_DASH_COOLDOWN
-    
-    -- Distance
-    local distance_score = proximity_score(current_position, player)
-    danger_score = danger_score + distance_score * DANGER_PLAYER_PROXIMITY
 
     -- Direction
     local direction_score = direction_score(current_position, player)
@@ -359,6 +355,10 @@ function score_danger_player(current_position, player)
     -- Mobility
     local mobility_score = player.mobility / (BASE_SPEED_PER_TICK*5) * DANGER_PLAYER_MOBILITY
     danger_score = danger_score + mobility_score * DANGER_PLAYER_MOBILITY
+
+    -- Distance
+    local distance_score = proximity_score(current_position, player)
+    danger_score = danger_score*distance_score
 
     return danger_score
 end
@@ -474,7 +474,6 @@ function get_all_scores(me, possible_position)
     for _, player in pairs(others) do
         player_danger = player_danger + score_danger_player(possible_position, player)
     end
-    player_danger = player_danger / number_of_players
 
     -- Evaluate COD
     local cod_danger = score_danger_cod(me, possible_position)
