@@ -585,7 +585,6 @@ end
 -- Called every tick
 -- @param me The bot
 function bot_main(me)
-    print_table(bullets)
     -- Update tick count
     num_ticks = num_ticks + 1
     -- Update enemy positions and cooldowns
