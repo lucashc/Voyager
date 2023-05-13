@@ -252,6 +252,7 @@ function update_others_bullets(me)
                     position = bullet_pos,
                     direction = direction
                 }
+                print("Adding bullet")
             -- Seen before
             else
                 bullets[id].position = bullet_pos
@@ -341,7 +342,7 @@ function next_cod(ticks, radius)
         return 1500, 40
     elseif ticks > 800 then
         return 1200, 90
-    elseif ticks > 0 then
+    else
         return 800, 500
     end
 end
