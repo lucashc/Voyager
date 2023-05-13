@@ -67,14 +67,13 @@ local bullets = {}
 
 
 -- Array of directions to sample
-local theta = {}
-for i = 1, 360 do
-    theta[i] = i/360 * 2 * math.pi
+local MOVE_DIRECTIONS = {}
+NUM_DIRECTIONS = 24
+for i = 1, NUM_DIRECTIONS do
+    local theta = i/NUM_DIRECTIONS * 2 * math.pi
+    MOVE_DIRECTIONS[i] = vec.new(math.cos(theta), math.sin(theta))
 end
-local directions = {}
-for i = 1, 360 do
-    directions[i] = vec.new(math.cos(theta[i]), math.sin(theta[i]))
-end
+MOVE_DIRECTIONS[NUM_DIRECTIONS+1] = vec.new(0, 0)
 
 
 ----------------------
@@ -385,6 +384,8 @@ function score_danger_cod(me, current_position)
 
     next_cod_time, next_cod_radius = next_cod(num_ticks, radius)
 
+    next_cod_radius = next_cod_radius * 0.7 -- try to get within the COD
+
     if radius <= next_cod_radius then
         -- Inside future COD, safe for now
         return 0
@@ -415,7 +416,7 @@ function score_danger_walls(current_position)
     end
     dist_to_wall = math.min(dist_x, dist_y)
     if dist_x < 20 and dist_y < 20 then 
-        dist_to_wall = dist_wall * 0.5
+        dist_to_wall = dist_to_wall * 0.5
     end
     return 1 / (dist_to_wall+1) 
 end
@@ -466,26 +467,7 @@ function score_danger_bullet(our_pos)
     return total_danger
 end
 
--- Possible Next moves
-local MOVE_DIRECTIONS = {
-    N = vec.new(0, 1),
-    NE = vec.new(1, 1),
-    E = vec.new(1, 0),
-    SE = vec.new(1, -1),
-    S = vec.new(0, -1),
-    SW = vec.new(-1, -1),
-    W = vec.new(-1, 0),
-    NW = vec.new(-1, 1),
-    STAY = vec.new(0, 0)
-}
-
-local PLAYER_DANGER_WEIGHT = 0.8
-local COD_DANGER_WEIGHT = 5.0
-local BULLET_DANGER_WEIGHT = 1
-local WALL_DANGER_WEIGHT = 0.1
-
-function score_move(me, possible_position)
-
+function get_all_scores(me, possible_position)
     -- Evaluate other players
     local player_danger = 0
     local number_of_players = count_table(others)
@@ -503,7 +485,18 @@ function score_move(me, possible_position)
     -- Evaluate bullets
     local bullet_danger = score_danger_bullet(possible_position)
 
-    return PLAYER_DANGER_WEIGHT * player_danger + COD_DANGER_WEIGHT * cod_danger + WALL_DANGER_WEIGHT * wall_danger + BULLET_DANGER_WEIGHT * bullet_danger
+    return player_danger, cod_danger, wall_danger, bullet_danger
+end
+
+local PLAYER_DANGER_WEIGHT = 0.3
+local COD_DANGER_WEIGHT = 5.0
+local BULLET_DANGER_WEIGHT = 1
+local WALL_DANGER_WEIGHT = 0.1
+
+function score_move(me, possible_position)
+    local player, cod, wall, bullet = get_all_scores(me, possible_position)
+
+    return PLAYER_DANGER_WEIGHT * player + COD_DANGER_WEIGHT * cod + WALL_DANGER_WEIGHT * wall + BULLET_DANGER_WEIGHT * bullet
 end
 
 
@@ -520,7 +513,9 @@ function determine_best_move(me, current_position)
             best_move = move
         end
     end
-    -- print(best_move)
+
+    local player, cod, wall, bullet = get_all_scores(me, current_position)
+    print("Best move" .. best_move:x() .. " " .. best_move:y() .. " with score " .. best_score .. " player " .. player .. " cod " .. cod .. " wall " .. wall .. " bullet " .. bullet)
     return best_move
 end
 
