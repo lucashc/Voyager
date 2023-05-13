@@ -66,6 +66,17 @@ local others = {}
 local bullets = {}
 
 
+-- Array of directions to sample
+local theta = {}
+for i = 1, 360 do
+    theta[i] = i/360 * 2 * math.pi
+end
+local directions = {}
+for i = 1, 360 do
+    directions[i] = vec.new(math.cos(theta[i]), math.sin(theta[i]))
+end
+
+
 ----------------------
 -- Helper Functions --
 ----------------------
@@ -258,7 +269,6 @@ function update_others_bullets(me)
                 bullets[id].position = bullet_pos
             end
         end
-
         ::continue::
     end
 end
@@ -284,7 +294,68 @@ end
 -- Evaluation --
 ----------------
 
--- Adds up to 100
+function find_line_eq(pos1, pos2)
+    local a=pos2:y()-pos1:y()
+    local b=pos1:x()-pos2:x()
+    local c= a*(-pos1:x())-pos1:y()*b
+    return a,b,c
+end
+
+function perp_dist(our_coord, bullet_coord, bullet_direction)
+    local a,b,c = find_line_eq(bullet_coord, bullet_coord:add(bullet_direction))
+    local dist = math.abs(a*our_coord:x()+b*our_coord:y()+c)/math.sqrt(a*a+b*b)
+    return dist
+end
+
+function danger_perp_dist(dist)
+    if dist < 2 then
+        return 1
+    else
+        return math.exp(-.1*dist)+(1-math.exp(-.1*2))
+    end
+    return dist
+end
+
+function danger_bullet_proximity(our_pos, bullet)
+    local dist = vec.distance(our_pos, bullet.position)
+    -- if bullet is moving away, then no danger
+    if dist < vec.distance(our_pos, bullet.position:add(bullet.direction)) then
+        -- print("bullet is moving away")
+        return 0
+    elseif dist<8 then
+        return 1
+    else
+        return math.exp(-.1*dist) + (1-math.exp(-.1*8))
+    end
+end
+
+function danger_of_position(our_pos)
+    local total_danger = 0
+    -- print("entering danger_of_position")
+    for _, bullet in pairs(bullets) do
+        -- print("danger_bullet_proximity" .. danger_bullet_proximity(our_pos, bullet))
+        -- print("danger_perp_dist" .. danger_perp_dist(perp_dist(our_pos, bullet.position, bullet.direction)))
+        local danger = danger_bullet_proximity(our_pos, bullet)*danger_perp_dist(perp_dist(our_pos, bullet.position, bullet.direction))
+        total_danger = total_danger + danger
+    end
+    return total_danger
+end
+
+function find_best_pos(our_pos)
+    local best_dir = vec.new(0,0)
+    local best_danger = danger_of_position(our_pos)
+    -- print("danger for not moving pos: " .. best_danger)
+    for _, dir in ipairs(directions) do
+        local new_danger = danger_of_position(our_pos:add(dir))
+        if new_danger<best_danger then
+            best_danger = new_danger
+            best_dir = dir
+        end
+        -- print("danger for direction " .. dir:x() .. ", " .. dir:y() .. ": " .. new_danger)
+    end
+    return best_dir
+end
+
 local DANGER_PLAYER_DASH_COOLDOWN = 10
 local DANGER_PLAYER_PROXIMITY = 45
 local DANGER_PLAYER_DIRECTION = 15
@@ -471,6 +542,7 @@ function shoot_people(me)
 
     for _, entity in ipairs(close) do
         if entity:type() == "player" and try_shoot_player(me, entity) then
+            -- print(score_danger_player(me:pos(), others[entity:id()]))
             return
         end
     end
@@ -488,6 +560,7 @@ end
 -- Called every tick
 -- @param me The bot
 function bot_main(me)
+    print_table(bullets)
     -- Update tick count
     num_ticks = num_ticks + 1
     -- Update enemy positions and cooldowns
@@ -497,6 +570,10 @@ function bot_main(me)
     best_move = determine_best_move(me, me:pos())
     me:move(best_move)
     shoot_people(me)
+
+    -- local dir = find_best_pos(me:pos())
+    -- -- print("Direction that is best is " .. dir:x() .. ", " .. dir:y())
+    -- me:move(dir)
 
     -- Administrative Functions
     update_others_cooldowns()
