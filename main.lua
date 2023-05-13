@@ -486,7 +486,7 @@ function get_all_scores(me, possible_position)
 end
 
 local PLAYER_DANGER_WEIGHT = 0.3
-local COD_DANGER_WEIGHT = 1.0
+local COD_DANGER_WEIGHT = 2.0
 local BULLET_DANGER_WEIGHT = 1
 local WALL_DANGER_WEIGHT = 0.1
 
@@ -590,6 +590,8 @@ function bot_main(me)
     local best_move = determine_best_move(me, me:pos())
     me:move(best_move)
     shoot_people(me)
+
+    PLAYER_DANGER_WEIGHT = PLAYER_DANGER_WEIGHT*0.999
 
     -- Administrative Functions
     update_others_cooldowns()
