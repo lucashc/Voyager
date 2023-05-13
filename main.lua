@@ -521,53 +521,47 @@ end
 -- Main Bot code --
 -------------------
 
-MOVE_TARGET = vec.new(250, 230)
+function spell_people(me)
+    -- find: 1. clostest player, 2. most threatening player (hitman)
+    local distance_to_run = 3
+    local closest_player = others[1]
+    local min_distance = FIELD_SIZE
+    local dangerous_player = others[1]
+    local max_danger = 0
 
-function move_toward_cod(me)
-    if vec.distance(me:pos(), FIELD_CENTER) > 30 then
-        me:move(MOVE_TARGET:sub(me:pos()))
-    -- Uncomment to stop bouncing back and forth
-    -- else
-    --    me:move(vec.new(0, 0))
-    end
-end
-
-local shot_players = {}
-
-function try_shoot_player(me, player)
-    -- Let's not shoot ourselves
-    if me:id() == player:id() then
-        return false
-    end
-
-    local id = player:id()
-    if shot_players[id] == nil then
-        shot_players[id] = 0
-    end
-
-    if shot_players[id] < 15 then
-        do_projectile_at(me, player:pos())
-        shot_players[id] = shot_players[id] + 1
-        return true
-    else
-        return false
-    end
-end
-
-function shoot_people(me)
-    if me:cooldown(0) > 0 then
-        return
-    end
-
-    local close = me:visible()
-
-    for _, entity in ipairs(close) do
-        if entity:type() == "player" and try_shoot_player(me, entity) then
-            -- print(score_danger_player(me:pos(), others[entity:id()]))
-            return
+    for _, player in pairs(others) do
+        local player_danger = 0.8*proximity_score(me:pos(), player) + 0.2*direction_score(me:pos(), player)
+        if player_danger>max_danger then
+            max_danger = player_danger
+            dangerous_player = player
+        end
+        local player_distance = vec.distance(me:pos(), player.pos[1])
+        if player_distance<min_distance then
+            min_distance = player_distance
+            closest_player = player
         end
     end
+
+    -- if oppenents are close... run!!
+    if min_distance<= distance_to_run then
+        -- if dash cooldown 
+        if me:cooldown(1)==0 then
+            -- TODO add dash
+            local direction = determine_best_move(me, me:pos(), true)
+            return 1, direction
+        -- we cannot run, so might as well stab
+        elseif min_distance<=2 and me:cooldown(2)==0 then
+            local cp_pos = closest_player.pos[1]
+            return 2, cp_pos:sub(me:pos())
+        end
+    end
+
+    -- shoot at the most dangerous player
+    local dp_pos = dangerous_player.pos[1]
+    -- could consider where the enemy is moving
+    return 0, dp_pos:sub(me:pos())
 end
+
 
 -- Initialisation
 -- Called when the bot is initialised
@@ -589,7 +583,10 @@ function bot_main(me)
     -- Our actions
     local best_move = determine_best_move(me, me:pos())
     me:move(best_move)
-    shoot_people(me)
+
+    -- Spell casting
+    local spell, direction = spell_people(me)
+    me:cast(spell, direction)
 
     PLAYER_DANGER_WEIGHT = PLAYER_DANGER_WEIGHT*0.999
 
