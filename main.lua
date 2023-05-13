@@ -1,34 +1,59 @@
--- Global Game Constants
+-- Copyright © OutLauz
+
+---------------------------
+-- Global Game Constants --
+---------------------------
+
+-- Playing Field Size
+-- It is 500×500, with center (250, 250)
+local FIELD_SIZE <const> = 500
+local FIELD_CENTER <const> = vec.new(FIELD_SIZE / 2, FIELD_SIZE / 2)
+
+-- Tick Statistics
+local TICKS_PER_SECOND <const> = 30
 
 -- Base Speed
-local BASE_SPEED <const> = 1
+local BASE_SPEED_PER_SECOND <const> = 1
+local BASE_SPEED_PER_TICK <const> = BASE_SPEED_PER_SECOND / TICKS_PER_SECOND
 
 -- Base Health
 local BASE_HEALTH <const> = 100
 
 -- Cooldowns
-local DASH_COOLDOWN <const> = 260
-local PROJECTILE_COOLDOWN <const> = 1
+local DASH_COOLDOWN <const> = 250
+local BULLET_COOLDOWN <const> = 1
 local MELEE_COOLDOWN <const> = 50
-
--- Melee Range
-local MELEE_RANGE <const> = 2
 
 -- Dash Speed
 local DASH_SPEED <const> = 10
 
+-- Bullet Statistics
+local BULLET_SPEED <const> = BASE_SPEED * 4
+local BULLET_DAMAGE <const> = 10
 
--- Globals
+-- Melee Statistics
+local MELEE_RANGE <const> = 2
+local MELEE_DAMAGE <const> = 20
+
+-- Circle of Deatch Statistics (per tick)
+local COD_DAMAGE <const> = 1
+
+
+-------------
+-- Globals --
+-------------
 
 -- Cooldowns
 local cooldowns = {
     dash = 0,
-    projectile = 0,
+    bullet = 0,
     melee = 0
 }
 
 
--- Helper Functions
+----------------------
+-- Helper Functions --
+----------------------
 
 -- Does a melee attack
 -- Has a cooldown of 50 ticks
@@ -46,7 +71,7 @@ end
 -- @param direction The direction to fire the projectile
 function do_projectile(me, direction)
     me:cast(0, direction)
-    cooldowns.projectile = PROJECTILE_COOLDOWN
+    cooldowns.bullet = bullet_COOLDOWN
 end
 
 
@@ -61,14 +86,23 @@ end
 
 
 -- Updates the cooldowns
+-- Should be called every tick
 function update_cooldowns():
-    for i = 1, 3 do
-        if cooldowns[i] > 0 then
-            cooldowns[i] = cooldowns[i] - 1
-        end
+    if cooldowns.dash > 0 then
+        cooldowns.dash = cooldowns.dash - 1
+    end
+    if cooldowns.bullet > 0 then
+        cooldowns.bullet = cooldowns.bullet - 1
+    end
+    if cooldowns.melee > 0 then
+        cooldowns.melee = cooldowns.melee - 1
     end
 end
 
+
+-------------------
+-- Main Bot code --
+-------------------
 
 -- Initialisation
 -- Called when the bot is initialised
