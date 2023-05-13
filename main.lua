@@ -72,7 +72,12 @@ end
 -- @param direction The direction to fire the projectile
 function do_projectile(me, direction)
     me:cast(0, direction)
-    cooldowns.bullet = bullet_COOLDOWN
+    cooldowns.bullet = BULLET_COOLDOWN
+end
+
+function do_projectile_at(me, target_pos)
+    local direction = target_pos:sub(me:pos())
+    do_projectile(me, direction)
 end
 
 
@@ -105,18 +110,47 @@ end
 -- Main Bot code --
 -------------------
 
+local shot_players = {}
+
+function try_shoot_player(me, player)
+    local id = player:id()
+    if shot_players[id] == nil then
+        shot_players[id] = 0
+    end
+
+    if shot_players[id] < 15 then
+        do_projectile_at(me, player:pos())
+        shot_players[id] = shot_players[id] + 1
+        return true
+    else
+        return false
+    end
+end
+
+function shoot_people(me)
+    local close = me:visible()
+
+    for _, entity in ipairs(close) do
+        if entity:type() == "player" and try_shoot_player(me, entity) then
+            return
+        end
+    end
+end
+
 -- Initialisation
 -- Called when the bot is initialised
 -- @param me The bot
 function bot_init(me)
 end
 
-
 -- Main bot function
 -- Called every tick
 -- @param me The bot
 function bot_main(me)
-    me:move(vec.new(1, 0))
+    shoot_people(me)
+
+    -- me:move(vec.new(1, 0))
+
     -- Administrative Functions
     update_cooldowns()
 end
