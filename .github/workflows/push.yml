@@ -23,6 +23,7 @@ jobs:
         echo "feedback<<$EOF" >> "$GITHUB_OUTPUT"
         echo "# Auto-generated feedback" >> "$GITHUB_OUTPUT"
         python3 scripts/summary.py >> "$GITHUB_OUTPUT"
+        python3 scripts/get_ranking.py >> "$GITHUB_OUTPUT"
         echo "$EOF" >> "$GITHUB_OUTPUT"
       id: generate-commit-message
     - name: Create commit comment
