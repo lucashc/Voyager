@@ -397,6 +397,8 @@ function score_danger_cod(me, current_position)
         return 0
     end
 
+    print("Cod: " .. cod:x() .. ", " .. cod:y() .. "," .. cod:radius())
+
     local cod_center = vec.new(cod:x(), cod:y())
     local radius = vec.distance(current_position, cod_center)
 
@@ -502,7 +504,7 @@ end
 
 local PLAYER_DANGER_WEIGHT = 0 -- 0.5 -- 0.3
 local COD_DANGER_WEIGHT = 1
-local BULLET_DANGER_WEIGHT = 1
+local BULLET_DANGER_WEIGHT = 0
 local WALL_DANGER_WEIGHT = 0.0
 
 function score_move(me, possible_position)
@@ -515,7 +517,7 @@ end
 function determine_best_move(me, current_position, speed)
     -- Note, high score is BAD!
     local best_move = vec.new(0, 0)
-    local best_score = score_move(me, best_move)
+    local best_score = score_move(me, current_position)
 
     for _, move in pairs(MOVE_DIRECTIONS) do
         local new_position = current_position:add(mul_scalar_vec(speed, normalise(move)))
@@ -606,7 +608,7 @@ function bot_main(me)
     local best_move = determine_best_move(me, me:pos(), BASE_SPEED_PER_TICK)
 
     -- Spell casting
-    local spell, direction = spell_people(me)
+    local spell, direction = nil, nil -- spell_people(me)
     if spell ~= nil then
         me:cast(spell, direction)
     end
