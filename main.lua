@@ -73,7 +73,6 @@ for i = 1, NUM_DIRECTIONS do
     local theta = i/NUM_DIRECTIONS * 2 * math.pi
     MOVE_DIRECTIONS[i] = vec.new(math.cos(theta), math.sin(theta))
 end
-MOVE_DIRECTIONS[NUM_DIRECTIONS+1] = vec.new(0, 0)
 
 
 ----------------------
@@ -392,11 +391,18 @@ end
 -- Evaluate COD
 -- @return The score of the COD
 function score_danger_cod(me, current_position)
-    local radius = vec.distance(current_position, FIELD_CENTER)
+    local cod = me:cod()
 
-    local next_cod_radius = get_smoothed_cod(num_ticks) * 0.8
+    if cod:x() < 0 or cod:y() < 0 then
+        return 0
+    end
 
-    return math.exp((radius - next_cod_radius) / next_cod_radius * 0.1)
+    local cod_center = vec.new(cod:x(), cod:y())
+    local radius = vec.distance(current_position, cod_center)
+
+    local margin_radius = radius * 0.8
+
+    return math.exp(math.max(0, radius - margin_radius) / margin_radius * 2)
 end
 
 -- Penalize wall distance
@@ -437,12 +443,18 @@ function perp_dist(our_coord, bullet_coord, bullet_direction)
     return dist
 end
 
-function danger_perp_dist(dist)
-    if dist < 4 then
+function exp_smoothing(smooth_start, smooth_end, x)
+    if x < smooth_start then
         return 1
     else
-        return math.exp(-.1*dist)+(1-math.exp(-.1*4))
+        A = 1 / (math.exp(-smooth_start) - math.exp(-smooth_end))
+        B = -A * math.exp(-smooth_end)
+        return math.max(A * math.exp(-x) + B, 0)
     end
+end
+
+function danger_perp_dist(dist)
+    return exp_smoothing(8, 400, dist)
 end
 
 function danger_bullet_proximity(our_pos, bullet)
@@ -451,10 +463,8 @@ function danger_bullet_proximity(our_pos, bullet)
     if dist < vec.distance(our_pos, bullet.position:add(bullet.direction)) then
         -- print("bullet is moving away")
         return 0
-    elseif dist<8 then
-        return 1
     else
-        return math.exp(-.1*dist) + (1-math.exp(-.1*8))
+        return (exp_smoothing(5, 15, dist) + exp_smoothing(15, 400, dist)) * 0.5
     end
 end
 
@@ -490,8 +500,8 @@ function get_all_scores(me, possible_position)
     return player_danger, cod_danger, wall_danger, bullet_danger
 end
 
-local PLAYER_DANGER_WEIGHT = 0.5 -- 0.3
-local COD_DANGER_WEIGHT = 2.0
+local PLAYER_DANGER_WEIGHT = 0 -- 0.5 -- 0.3
+local COD_DANGER_WEIGHT = 1
 local BULLET_DANGER_WEIGHT = 1
 local WALL_DANGER_WEIGHT = 0.0
 
@@ -504,8 +514,8 @@ end
 
 function determine_best_move(me, current_position, speed)
     -- Note, high score is BAD!
-    local best_move = nil
-    local best_score = 1000000
+    local best_move = vec.new(0, 0)
+    local best_score = score_move(me, best_move)
 
     for _, move in pairs(MOVE_DIRECTIONS) do
         local new_position = current_position:add(mul_scalar_vec(speed, normalise(move)))
