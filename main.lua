@@ -47,8 +47,7 @@ local COD_DAMAGE = 1
 -- Other players
 -- A list of other players
 -- Each player is a tabel indexed by id with the following fields:
--- - pos: The player's current position
--- - prev_pos: The player's previous position
+-- - pos: The player's positions, [1] is last, contains last 5 positions
 -- - direction: Difference between the player's last position and current position
 -- - dash_cooldown: The player's last dash cooldown
 -- - bullet_cooldown: The player's last bullet cooldown
@@ -175,12 +174,11 @@ function update_others_players(me)
                 goto continue
             end
             -- Update others
-            local pos = entity:pos()
+            local new_pos = entity:pos()
             -- Not seen before
             if others[id] == nil then
                 others[id] = {
-                    pos = pos,
-                    prev_pos = pos,
+                    pos = {new_pos, new_pos, new_pos, new_pos, new_pos},
                     direction = vec.new(0, 0),
                     dash_cooldown = 0,
                     bullet_cooldown = 0,
@@ -189,13 +187,13 @@ function update_others_players(me)
             -- Seen before
             else
                 -- Check if dashed
-                if vec.distance(pos, others[id].pos) > BASE_SPEED_PER_TICK then
+                if vec.distance(new_pos, others[id].pos[1]) > BASE_SPEED_PER_TICK then
                     others[id].dash_cooldown = DASH_COOLDOWN
                 end
                 -- Update
-                others[id].direction = pos:sub(others[id].pos)
-                others[id].prev_pos = others[id].pos
-                others[id].pos = pos
+                others[id].direction = new_pos:sub(others[id].pos[1])
+                local old_pos = others[id].pos
+                others[id].pos = {new_pos, old_pos[1], old_pos[2], old_pos[3], old_pos[4]}
             end
         end
         ::continue::
@@ -209,7 +207,7 @@ function update_others_bullets(me)
         -- Then check bullets
         if entity:type() == "small_proj" then
             local id = entity:id()
-            local pos = entity:pos()
+            local bullet_pos = entity:pos()
             -- print("bullet with id " .. id .. " has position " .. pos:x() .. ", " .. pos:y())
             -- Not seen before
             if bullets[id] == nil then
@@ -218,8 +216,8 @@ function update_others_bullets(me)
                     goto continue
                 end
 
-                local old_pos = others[owner_id].prev_pos
-                local direction = pos:sub(old_pos)
+                local old_user_pos = others[owner_id].pos[2]
+                local direction = bullet_pos:sub(old_user_pos)
                 direction = normalise(direction)
 
                 others[owner_id].bullet_cooldown = BULLET_COOLDOWN
@@ -227,12 +225,12 @@ function update_others_bullets(me)
 
                 bullets[id] = {
                     owner_id = owner_id,
-                    position = pos,
+                    position = bullet_pos,
                     direction = direction
                 }
             -- Seen before
             else
-                bullets[id].position = pos
+                bullets[id].position = bullet_pos
             end
         end
 
@@ -282,7 +280,7 @@ function score_danger_player(me, player)
     danger_score = (DASH_COOLDOWN - player.dash_cooldown) / DASH_COOLDOWN * DANGER_PLAYER_DASH_COOLDOWN
     
     -- Proximity
-    local distance = vec.distance(me:pos(), player.pos)
+    local distance = vec.distance(me:pos(), player.pos[1])
     local distance_score = nil
     if distance < 2 then
         distance_score = 1
@@ -293,7 +291,7 @@ function score_danger_player(me, player)
 
     -- Direction
     local direction = normalise(player.direction)
-    local connection_direction = normalise(player.pos:sub(me:pos()))
+    local connection_direction = normalise(player.pos[1]:sub(me:pos()))
     local direction_score = dot_vec(direction, connection_direction):neg()
     if direction_score < 0 then
         direction_score = 0
