@@ -44,11 +44,15 @@ local COD_DAMAGE = 1
 -- Globals --
 -------------
 
+-- Number of ticks
+local num_ticks = 0
+
 -- Other players
 -- A list of other players
 -- Each player is a tabel indexed by id with the following fields:
 -- - pos: The player's positions, [1] is last, contains last 5 positions
 -- - direction: Difference between the player's last position and current position
+-- - mobility: The player's mobility
 -- - dash_cooldown: The player's last dash cooldown
 -- - bullet_cooldown: The player's last bullet cooldown
 -- - bullets_spawned: Number of bullets spawned by the player for the entire game
@@ -180,6 +184,7 @@ function update_others_players(me)
                 others[id] = {
                     pos = {new_pos, new_pos, new_pos, new_pos, new_pos},
                     direction = vec.new(0, 0),
+                    mobility = 0,
                     dash_cooldown = 0,
                     bullet_cooldown = 0,
                     bullets_spawned = 0
@@ -194,6 +199,7 @@ function update_others_players(me)
                 others[id].direction = new_pos:sub(others[id].pos[1])
                 local old_pos = others[id].pos
                 others[id].pos = {new_pos, old_pos[1], old_pos[2], old_pos[3], old_pos[4]}
+                others[id].mobility = 0.8 * others[id].mobility + 0.2 * vec.distance(new_pos, old_pos[5])
             end
         end
         ::continue::
@@ -259,11 +265,12 @@ end
 -- Evaluation --
 ----------------
 
-
+-- Adds up to 100
 local DANGER_PLAYER_DASH_COOLDOWN = 10
-local DANGER_PLAYER_PROXIMITY = 50
-local DANGER_PLAYER_DIRECTION = 10
-local DANGER_PLAYER_AGGRESSIVE = 30
+local DANGER_PLAYER_PROXIMITY = 45
+local DANGER_PLAYER_DIRECTION = 15
+local DANGER_PLAYER_AGGRESSIVE = 15
+local DANGER_PLAYER_MOBILITY = 15
 
 -- Evaluate other players
 -- - cooldown: (max_cooldown - player_cooldown) / max_cooldown
@@ -273,14 +280,14 @@ local DANGER_PLAYER_AGGRESSIVE = 30
 -- @param me The bot
 -- @param other The other player
 -- @return The score of the other player
-function score_danger_player(me, player)
+function score_danger_player(current_position, player)
     local danger_score = 0
 
     -- Dashing
     danger_score = (DASH_COOLDOWN - player.dash_cooldown) / DASH_COOLDOWN * DANGER_PLAYER_DASH_COOLDOWN
     
     -- Proximity
-    local distance = vec.distance(me:pos(), player.pos[1])
+    local distance = vec.distance(current_position, player.pos[1])
     local distance_score = nil
     if distance < 2 then
         distance_score = 1
@@ -291,15 +298,19 @@ function score_danger_player(me, player)
 
     -- Direction
     local direction = normalise(player.direction)
-    local connection_direction = normalise(player.pos[1]:sub(me:pos()))
-    local direction_score = dot_vec(direction, connection_direction):neg()
+    local connection_direction = normalise(player.pos[1]:sub(current_position))
+    local direction_score = -dot_vec(direction, connection_direction)
     if direction_score < 0 then
         direction_score = 0
     end
     danger_score = danger_score + direction_score * DANGER_PLAYER_DIRECTION
 
-    -- Bullet
-    -- TODO
+    -- Aggressiveness
+    local aggressive_score = player.bullets_spawned / (num_ticks / BULLET_COOLDOWN) * DANGER_PLAYER_AGGRESSIVE
+    danger_score = danger_score + aggressive_score
+
+    -- Mobility
+    local mobility_score = player.mobility / (BASE_SPEED_PER_TICK*5) * DANGER_PLAYER_MOBILITY
 
     return danger_score
 end
@@ -312,13 +323,13 @@ local DANGER_COD = 100
 -- - Outside: 1 / ((distance - radius)/radius + 0.5) / 2
 -- @param me The bot
 -- @return The score of the COD
-function score_danger_cod(me)
+function score_danger_cod(current_position)
     local cod = me:cod()
     -- No COD yet
     if cod:x() == -1 then
         return 0
     end
-    local dist_to_cod = vec.distance(me:pos(), vec.new(cod:x(), cod:y()))
+    local dist_to_cod = vec.distance(current_position, vec.new(cod:x(), cod:y()))
     if dist_to_cod < cod:radius() then
         return 0
     else
@@ -387,6 +398,7 @@ function shoot_people(me)
 
     for _, entity in ipairs(close) do
         if entity:type() == "player" and try_shoot_player(me, entity) then
+            print(score_danger_player(me:pos(), others[entity:id()]))
             return
         end
     end
@@ -404,6 +416,8 @@ end
 -- Called every tick
 -- @param me The bot
 function bot_main(me)
+    -- Update tick count
+    num_ticks = num_ticks + 1
     -- Update enemy positions and cooldowns
     update_others(me)
 
