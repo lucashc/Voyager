@@ -251,6 +251,93 @@ function update_others_cooldowns(me)
     end
 end
 
+
+----------------
+-- Evaluation --
+----------------
+
+
+local DANGER_PLAYER_DASH_COOLDOWN = 10
+local DANGER_PLAYER_PROXIMITY = 50
+local DANGER_PLAYER_DIRECTION = 10
+local DANGER_PLAYER_AGGRESSIVE = 30
+
+-- Evaluate other players
+-- - cooldown: (max_cooldown - player_cooldown) / max_cooldown
+-- - proximity: 1 / (distance + 0.5)
+-- - direction: abs(dot(normalise(player_direction), normalise(connection_direction)))
+-- - aggressive: TODO
+-- @param me The bot
+-- @param other The other player
+-- @return The score of the other player
+function score_danger_player(me, player)
+    local danger_score = 0
+
+    -- Dashing
+    danger_score = (DASH_COOLDOWN - player.dash_cooldown) / DASH_COOLDOWN * DANGER_PLAYER_DASH_COOLDOWN
+    
+    -- Proximity
+    local distance = vec.distance(me:pos(), player.pos)
+    local distance_score = nil
+    if distance < 2 then
+        distance_score = 1
+    else
+        distance_score = 1 / (distance + 0.25)
+    end
+    danger_score = danger_score + distance_score * DANGER_PLAYER_PROXIMITY
+
+    -- Direction
+    local direction = normalise(player.direction)
+    local connection_direction = normalise(player.pos:sub(me:pos()))
+    local direction_score = dot_vec(direction, connection_direction):neg()
+    if direction_score < 0 then
+        direction_score = 0
+    end
+    danger_score = danger_score + direction_score * DANGER_PLAYER_DIRECTION
+
+    -- Bullet
+    -- TODO
+
+    return danger_score
+end
+
+
+local DANGER_COD = 100
+
+-- Evaluate COD
+-- - Zero if inside
+-- - Outside: 1 / ((distance - radius)/radius + 0.5) / 2
+-- @param me The bot
+-- @return The score of the COD
+function score_danger_cod(me)
+    local cod = me:cod()
+    -- No COD yet
+    if cod:x() == -1 then
+        return 0
+    end
+    local dist_to_cod = vec.distance(me:pos(), vec.new(cod:x(), cod:y()))
+    if dist_to_cod < cod:radius() then
+        return 0
+    else
+        return 1 / ((dist_to_cod - cod:radius())/cod:radius() + 0.5) / 2 * DANGER_COD
+    end
+end
+
+
+-- Possible Next moves
+local MOVE_DIRECTIONS = {
+    N = vec.new(0, 1),
+    NE = vec.new(1, 1),
+    E = vec.new(1, 0),
+    SE = vec.new(1, -1),
+    S = vec.new(0, -1),
+    SW = vec.new(-1, -1),
+    W = vec.new(-1, 0),
+    NW = vec.new(-1, 1),
+    STAY = vec.new(0, 0)
+}
+
+
 -------------------
 -- Main Bot code --
 -------------------
