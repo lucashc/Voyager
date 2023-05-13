@@ -99,6 +99,15 @@ function norm(vector)
     return vec.distance(vector, vec.new(0, 0))
 end
 
+function exp_smoothing(smooth_start, smooth_end, x)
+    if x < smooth_start then
+        return 1
+    else
+        A = 1 / (math.exp(-smooth_start) - math.exp(-smooth_end))
+        B = -A * math.exp(-smooth_end)
+        return math.max(A * math.exp(-x) + B, 0)
+    end
+end
 
 -- Normalise a vector
 -- @param vector to normalise
@@ -305,19 +314,8 @@ end
 -- Evaluation --
 ----------------
 
-function proximity_score(position, player)
-    -- Proximity
-    local distance = vec.distance(current_position, player.pos[1])
-    local distance_score = nil
-    if distance < 2 then
-        distance_score = 1
-    else
-        distance_score = -math.exp((distance-2)/40)+2
-        if distance_score < 0 then
-            distance_score = 0
-        end
-    end
-    return distance_score
+function proximity_score(current_position, player)
+    return exp_smoothing(2, 100, vec.distance(current_position, player.pos[1]))
 end
 
 
@@ -351,7 +349,7 @@ local DANGER_PLAYER_MOBILITY = 0 -- 0.25
 -- @param me The bot
 -- @param other The other player
 -- @return The score of the other player
-function score_danger_player(current_position, player)
+function score_danger_player(me, current_position, player)
     local danger_score = 0
 
     -- Dashing
@@ -369,8 +367,14 @@ function score_danger_player(current_position, player)
     local mobility_score = player.mobility / (BASE_SPEED_PER_TICK*5) * DANGER_PLAYER_MOBILITY
     danger_score = danger_score + mobility_score * DANGER_PLAYER_MOBILITY
 
+    -- COD scaling for distance
+    local cod_scaling = 1
+    if me:cod():x() ~= -1 then
+        cod_scaling = me:cod():radius() / 500
+    end
+
     -- Distance
-    local distance_score = proximity_score(current_position, player)
+    local distance_score = proximity_score(current_position, player) * cod_scaling
     danger_score = danger_score*distance_score
 
     return danger_score
@@ -454,16 +458,6 @@ function perp_dist(our_coord, bullet_coord, bullet_direction)
     return dist
 end
 
-function exp_smoothing(smooth_start, smooth_end, x)
-    if x < smooth_start then
-        return 1
-    else
-        A = 1 / (math.exp(-smooth_start) - math.exp(-smooth_end))
-        B = -A * math.exp(-smooth_end)
-        return math.max(A * math.exp(-x) + B, 0)
-    end
-end
-
 function danger_perp_dist(dist)
     return exp_smoothing(8, 400, dist)
 end
@@ -496,7 +490,7 @@ function get_all_scores(me, possible_position)
     local player_danger = 0
     local number_of_players = count_table(others)
     for _, player in pairs(others) do
-        player_danger = player_danger + score_danger_player(possible_position, player)
+        player_danger = player_danger + score_danger_player(me, possible_position, player)
     end
 
     -- Evaluate COD
