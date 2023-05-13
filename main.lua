@@ -294,6 +294,37 @@ end
 -- Evaluation --
 ----------------
 
+
+function proximity_score(position, player)
+    -- Proximity
+    local distance = vec.distance(current_position, player.pos[1])
+    local distance_score = nil
+    if distance < 2 then
+        distance_score = 1
+    else
+        distance_score = 1 / (distance + 0.25)
+    end
+    return distance_score
+end
+
+
+function direction_score(position, player)
+    local direction = normalise(player.direction)
+    local connection_direction = normalise(player.pos[1]:sub(current_position))
+    local direction_score = -dot_vec(direction, connection_direction)
+    if direction_score < 0 then
+        direction_score = 0
+    end
+    return direction_score
+end
+
+
+function aggressive_score(position, player)
+    local aggressive_score = player.bullets_spawned / (num_ticks / BULLET_COOLDOWN)
+    return aggressive_score
+end
+
+
 local DANGER_PLAYER_DASH_COOLDOWN = 0.10
 local DANGER_PLAYER_PROXIMITY = 0.45
 local DANGER_PLAYER_DIRECTION = 0.15
@@ -314,31 +345,21 @@ function score_danger_player(current_position, player)
     -- Dashing
     danger_score = (DASH_COOLDOWN - player.dash_cooldown) / DASH_COOLDOWN * DANGER_PLAYER_DASH_COOLDOWN
     
-    -- Proximity
-    local distance = vec.distance(current_position, player.pos[1])
-    local distance_score = nil
-    if distance < 2 then
-        distance_score = 1
-    else
-        distance_score = 1 / (distance + 0.25)
-    end
+    -- Distance
+    local distance_score = proximity_score(current_position, player)
     danger_score = danger_score + distance_score * DANGER_PLAYER_PROXIMITY
 
     -- Direction
-    local direction = normalise(player.direction)
-    local connection_direction = normalise(player.pos[1]:sub(current_position))
-    local direction_score = -dot_vec(direction, connection_direction)
-    if direction_score < 0 then
-        direction_score = 0
-    end
+    local direction_score = direction_score(current_position, player)
     danger_score = danger_score + direction_score * DANGER_PLAYER_DIRECTION
 
     -- Aggressiveness
-    local aggressive_score = player.bullets_spawned / (num_ticks / BULLET_COOLDOWN) * DANGER_PLAYER_AGGRESSIVE
-    danger_score = danger_score + aggressive_score
+    local aggressive_score = aggressive_score(current_position, player)
+    danger_score = danger_score + aggressive_score * DANGER_PLAYER_AGGRESSIVE
 
     -- Mobility
     local mobility_score = player.mobility / (BASE_SPEED_PER_TICK*5) * DANGER_PLAYER_MOBILITY
+    danger_score = danger_score + mobility_score * DANGER_PLAYER_MOBILITY
 
     return danger_score
 end
