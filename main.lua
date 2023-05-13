@@ -51,10 +51,29 @@ local cooldowns = {
     melee = 0
 }
 
+-- Other players
+-- A list of other players
+-- Each player is a tabel indexed by id with the following fields:
+-- - pos: The player's last position
+-- - direction: Difference between the player's last position and current position
+-- - dash_cooldown: The player's last dash cooldown
+local others = {}
+
+-- Bullets in the air
+-- List of all bullets
+-- - id: The bullet's id (might be unstable)
+-- - position: The bullet's position
+-- - direction: The bullet's direction
+local bullets = {}
+
 
 ----------------------
 -- Helper Functions --
 ----------------------
+
+---------------------------
+-- Our Agent's functions --
+---------------------------
 
 -- Does a melee attack
 -- Has a cooldown of 50 ticks
@@ -106,6 +125,65 @@ function update_cooldowns()
 end
 
 
+-----------------------------
+-- Other Agent's functions --
+-----------------------------
+
+function update_others(me)
+    -- Get all entities
+    local entities = me:visible()
+    -- Update other players
+    for _, entity in ipairs(entities) do
+        -- First check players
+        if entity:type() == "player" then
+            local id = entity:id()
+            -- Check if it is us
+            if id == me:id() then
+                goto continue
+            end
+            -- Update others
+            local pos = entity:pos()
+            -- Not seen before
+            if others[id] == nil then
+                others[id] = {
+                    pos = pos,
+                    direction = vec.new(0, 0),
+                    dash_cooldown = 0
+                }
+            -- Seen before
+            else
+                -- Check if dashed
+                if vec.distance(pos, others[id].pos) > BASE_SPEED_PER_TICK then
+                    others[id].dash_cooldown = DASH_COOLDOWN
+                elseif others[id].dash_cooldown > 0 then
+                    others[id].dash_cooldown = others[id].dash_cooldown - 1
+                end
+                -- Update
+                others[id].direction = pos:sub(others[id].pos)
+                others[id].pos = pos
+            end
+        -- Then check bullets
+        elseif entity:type() == "bullet" then
+            local id = entity:id()
+            local pos = entity:pos()
+            -- Not seen before
+            if bullets[id] == nil then
+                bullets[id] = {
+                    position = pos,
+                    direction = vec.new(0, 0)
+                }
+            -- Seen before
+            else
+                bullets[id] = {
+                    position = pos,
+                    direction = pos:sub(bulles[id].pos)
+                }
+            end
+        end
+        ::continue::
+    end
+end
+
 -------------------
 -- Main Bot code --
 -------------------
@@ -141,6 +219,8 @@ end
 -- Called when the bot is initialised
 -- @param me The bot
 function bot_init(me)
+    -- Administrative Functions
+    update_others(me)
 end
 
 -- Main bot function
@@ -153,4 +233,5 @@ function bot_main(me)
 
     -- Administrative Functions
     update_cooldowns()
+    update_others(me)
 end
