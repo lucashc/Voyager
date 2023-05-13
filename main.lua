@@ -364,36 +364,34 @@ function score_danger_player(current_position, player)
 end
 
 
-function next_cod(ticks, radius)
-    if ticks > 1500 then
-        return 1700, 10
-    elseif ticks > 1200 then
-        return 1500, 40
-    elseif ticks > 800 then
-        return 1200, 90
-    else
-        return 800, 500
-    end
+function interpolate(x1, x2, y1, y2, x)
+    return y1 + (y2 - y1) / (x2 - x1) * (x - x1)
 end
 
+function get_smoothed_cod(ticks)
+    if ticks < 800 then
+        return interpolate(0, 800, 500, 150, ticks)
+    elseif ticks < 1200 then
+        return interpolate(800, 1200, 150, 90, ticks)
+    elseif ticks < 1500 then
+        return interpolate(1200, 1500, 90, 40, ticks)
+    elseif ticks < 1700 then
+        return interpolate(1500, 1700, 40, 10, ticks)
+    elseif ticks < 1900 then
+        return interpolate(1700, 1900, 10, 0, ticks)
+    else
+        return 0
+    end
+end
 
 -- Evaluate COD
 -- @return The score of the COD
 function score_danger_cod(me, current_position)
-    radius = norm(current_position)
+    local radius = vec.distance(current_position, FIELD_CENTER)
 
-    next_cod_time, next_cod_radius = next_cod(num_ticks, radius)
+    local next_cod_radius = get_smoothed_cod(num_ticks) * 0.8
 
-    next_cod_radius = next_cod_radius * 0.7 -- try to get within the COD
-
-    if radius <= next_cod_radius then
-        -- Inside future COD, safe for now
-        return 0
-    end
-
-    remaining_time = next_cod_time - num_ticks
-    time_to_reach_cod = (radius - next_cod_radius) / BASE_SPEED_PER_SECOND
-    return math.max(0, 1 - 0.3 * remaining_time / time_to_reach_cod)
+    return math.exp((radius - next_cod_radius) / next_cod_radius * 0.1)
 end
 
 -- Penalize wall distance
@@ -488,7 +486,7 @@ function get_all_scores(me, possible_position)
 end
 
 local PLAYER_DANGER_WEIGHT = 0.3
-local COD_DANGER_WEIGHT = 5.0
+local COD_DANGER_WEIGHT = 1.0
 local BULLET_DANGER_WEIGHT = 1
 local WALL_DANGER_WEIGHT = 0.1
 
