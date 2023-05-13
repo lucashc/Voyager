@@ -44,13 +44,6 @@ local COD_DAMAGE = 1
 -- Globals --
 -------------
 
--- Cooldowns
-local cooldowns = {
-    dash = 0,
-    bullet = 0,
-    melee = 0
-}
-
 -- Other players
 -- A list of other players
 -- Each player is a tabel indexed by id with the following fields:
@@ -144,21 +137,6 @@ end
 function do_dash(me, direction)
     me:cast(1, direction)
     cooldowns.dash = DASH_COOLDOWN
-end
-
-
--- Updates the cooldowns
--- Should be called every tick
-function update_cooldowns()
-    if cooldowns.dash > 0 then
-        cooldowns.dash = cooldowns.dash - 1
-    end
-    if cooldowns.bullet > 0 then
-        cooldowns.bullet = cooldowns.bullet - 1
-    end
-    if cooldowns.melee > 0 then
-        cooldowns.melee = cooldowns.melee - 1
-    end
 end
 
 
@@ -297,6 +275,5 @@ function bot_main(me)
     shoot_people(me)
 
     -- Administrative Functions
-    update_cooldowns()
     update_others(me)
 end
