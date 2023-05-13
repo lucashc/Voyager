@@ -110,6 +110,15 @@ function dot_vec(vec1, vec2)
     return vec1:x() * vec2:x() + vec1:y() * vec2:y()
 end
 
+
+-- Multiply sclar with vec
+-- @param scalar Scalar
+-- @param vec Vector
+-- @return scalar * vec
+function mul_scalar_vec(scalar, vec1)
+    return vec.new(scalar * vec1:x(), scalar * vec1:y())
+end
+
 -- Vector div
 -- @param vec1 First vector
 -- @param vec2 Second vector
@@ -124,6 +133,15 @@ end
 -- @return true if num1 and num2 are close, false otherwise
 function is_close(num1, num2)
     return math.abs(num1 - num2) < 0.0001
+end
+
+-- Count elements in a table
+function count_table(table)
+    local count = 0
+    for _, _ in pairs(table) do
+        count = count + 1
+    end
+    return count
 end
 
 ---------------------------
@@ -169,7 +187,7 @@ end
 function update_others_players(me)
     local entities = me:visible()
     -- Update other players
-    for _, entity in ipairs(entities) do
+    for _, entity in pairs(entities) do
         -- First check players
         if entity:type() == "player" then
             local id = entity:id()
@@ -209,7 +227,7 @@ end
 function update_others_bullets(me)
     local entities = me:visible()
     -- Update other players
-    for _, entity in ipairs(entities) do
+    for _, entity in pairs(entities) do
         -- Then check bullets
         if entity:type() == "small_proj" then
             local id = entity:id()
@@ -323,7 +341,7 @@ local DANGER_COD = 100
 -- - Outside: 1 / ((distance - radius)/radius + 0.5) / 2
 -- @param me The bot
 -- @return The score of the COD
-function score_danger_cod(current_position)
+function score_danger_cod(me, current_position)
     local cod = me:cod()
     -- No COD yet
     if cod:x() == -1 then
@@ -350,6 +368,47 @@ local MOVE_DIRECTIONS = {
     NW = vec.new(-1, 1),
     STAY = vec.new(0, 0)
 }
+
+local PLAYER_DANGER_WEIGHT = 0.5
+local COD_DANGER_WEIGHT = 0.5
+local BULLET_DANGER_WEIGHT = 2
+
+function score_move(me, possible_position)
+
+    -- Evaluate other players
+    local player_danger = 0
+    local number_of_players = count_table(others)
+    for _, player in pairs(others) do
+        player_danger = player_danger + score_danger_player(possible_position, player)
+    end
+    player_danger = player_danger / number_of_players
+
+    -- Evaluate COD
+    cod_danger = score_danger_cod(me, possible_position)
+
+    print(player_danger)
+    print(cod_danger)
+
+    return PLAYER_DANGER_WEIGHT * player_danger + COD_DANGER_WEIGHT * cod_danger
+end
+
+
+function determine_best_move(me, current_position)
+    -- Note, high score is BAD!
+    local best_move = nil
+    local best_score = 1000000
+
+    for _, move in pairs(MOVE_DIRECTIONS) do
+        local new_position = current_position:add(mul_scalar_vec(BASE_SPEED_PER_TICK, normalise(move)))
+        local score = score_move(me, new_position)
+        if score < best_score then
+            best_score = score
+            best_move = move
+        end
+    end
+    print(best_move)
+    return best_move
+end
 
 
 -------------------
@@ -398,7 +457,6 @@ function shoot_people(me)
 
     for _, entity in ipairs(close) do
         if entity:type() == "player" and try_shoot_player(me, entity) then
-            print(score_danger_player(me:pos(), others[entity:id()]))
             return
         end
     end
@@ -422,7 +480,8 @@ function bot_main(me)
     update_others(me)
 
     -- Our actions
-    move_toward_cod(me)
+    best_move = determine_best_move(me, me:pos())
+    me:move(best_move)
     shoot_people(me)
 
     -- Administrative Functions
