@@ -368,7 +368,7 @@ function score_danger_player(me, current_position, player)
     danger_score = danger_score + mobility_score * DANGER_PLAYER_MOBILITY
 
     -- COD scaling for distance
-    local cod_scaling = 1
+    local cod_scaling = 1.2
     if me:cod():x() ~= -1 then
         cod_scaling = me:cod():radius() / 500
     end
