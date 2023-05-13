@@ -64,6 +64,19 @@ local bullets = {}
 -- Helper Functions --
 ----------------------
 
+-- Print all the functions in an object's metatable
+function dump_functions(x)
+    local t = getmetatable(x)
+
+    if t == nil then
+        return
+    end
+
+    for k, v in pairs(t) do
+        print(k, v)
+    end
+end
+
 -- Returns the norm of a vector
 -- @param vector to take norm of
 -- @return norm of vector
@@ -127,13 +140,6 @@ end
 -- @param direction The direction to fire the projectile
 function do_projectile(me, direction)
     me:cast(0, direction)
-    cooldowns.bullet = BULLET_COOLDOWN
-end
-
-function do_projectile_at(me, target_pos)
-    local direction = target_pos:sub(me:pos())
-    do_projectile(me, direction)
-    cooldowns.bullet = BULLET_COOLDOWN
 end
 
 function do_projectile_at(me, target_pos)
@@ -280,10 +286,7 @@ end
 -- Called every tick
 -- @param me The bot
 function bot_main(me)
-    shoot_people(me)
-
-    -- me:move(vec.new(1, 0))
-
+    move_toward_cod(me)
     shoot_people(me)
 
     -- Administrative Functions

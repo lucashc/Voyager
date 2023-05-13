@@ -31,8 +31,9 @@ def main():
         time.sleep(WAIT_TIMEOUT.seconds)
     print()
 
-    print(f"- [x] Found game: {game['id']}")
-    game_data = fetch_game(token, game["id"])
+    game_id = game["id"]
+    print(f"- [x] Found game: ({game_id})[https://royale.sqlillo.com/#/match/{game_id}]")
+    game_data = fetch_game(token, game_id)
 
     print()
     print("### Game Analysis")
