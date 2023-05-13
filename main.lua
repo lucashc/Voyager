@@ -375,7 +375,7 @@ function score_danger_player(me, current_position, player)
 
     -- Distance
     local distance_score = proximity_score(current_position, player) * cod_scaling
-    danger_score = danger_score*distance_score
+    danger_score = direction_score -- danger_score*distance_score
 
     return danger_score
 end
