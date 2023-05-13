@@ -199,6 +199,7 @@ end
 
 function update_others_players(me)
     local entities = me:visible()
+    local updated_entities = {}
     -- Update other players
     for _, entity in pairs(entities) do
         -- First check players
@@ -208,6 +209,7 @@ function update_others_players(me)
             if id == me:id() then
                 goto continue
             end
+            updated_entities[id] = true
             -- Update others
             local new_pos = entity:pos()
             -- Not seen before
@@ -235,6 +237,13 @@ function update_others_players(me)
         end
         ::continue::
     end
+    -- Remove old entities
+    for id, _ in pairs(others) do
+        if updated_entities[id] == nil then
+            others[id] = nil
+        end
+    end
+
 end
 
 function update_others_bullets(me)
@@ -522,7 +531,6 @@ function determine_best_move(me, current_position, speed)
     for _, move in pairs(MOVE_DIRECTIONS) do
         local new_position = current_position:add(mul_scalar_vec(speed, normalise(move)))
         if is_out_of_bounds(new_position) then
-            print("Move out of bounds")
             goto continue
         end
         local score = score_move(me, new_position)
@@ -552,7 +560,7 @@ function spell_people(me)
     local max_danger = 0
 
     for _, player in pairs(others) do
-        local player_danger = 0.8*proximity_score(me:pos(), player) + 0.2*direction_score(me:pos(), player)
+        local player_danger = proximity_score(me:pos(), player) *(1+ direction_score(me:pos(), player))
         if player_danger>max_danger then
             max_danger = player_danger
             dangerous_player = player
@@ -567,8 +575,6 @@ function spell_people(me)
     -- if oppenents are close... run!!
     if min_distance <= distance_to_run then
         -- if dash cooldown 
-        print("cooldown")
-        print(me:cooldown(1))
         if me:cooldown(1) <= 0 then
             local direction = determine_best_move(me, me:pos(), DASH_SPEED)
             return 1, direction
