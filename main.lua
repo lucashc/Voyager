@@ -6,37 +6,38 @@
 
 -- Playing Field Size
 -- It is 500×500, with center (250, 250)
-local FIELD_SIZE <const> = 500
-local FIELD_CENTER <const> = vec.new(FIELD_SIZE / 2, FIELD_SIZE / 2)
+local FIELD_SIZE = 500
+local FIELD_CENTER = vec.new(FIELD_SIZE / 2, FIELD_SIZE / 2)
 
 -- Tick Statistics
-local TICKS_PER_SECOND <const> = 30
+local TICKS_PER_SECOND = 30
 
 -- Base Speed
-local BASE_SPEED_PER_SECOND <const> = 1
-local BASE_SPEED_PER_TICK <const> = BASE_SPEED_PER_SECOND / TICKS_PER_SECOND
+local BASE_SPEED_PER_SECOND = 1
+local BASE_SPEED_PER_TICK = BASE_SPEED_PER_SECOND / TICKS_PER_SECOND
 
 -- Base Health
-local BASE_HEALTH <const> = 100
+local BASE_HEALTH = 100
 
 -- Cooldowns
-local DASH_COOLDOWN <const> = 250
-local BULLET_COOLDOWN <const> = 1
-local MELEE_COOLDOWN <const> = 50
+local DASH_COOLDOWN = 250
+local BULLET_COOLDOWN = 1
+local MELEE_COOLDOWN = 50
 
 -- Dash Speed
-local DASH_SPEED <const> = 10
+local DASH_SPEED = 10
 
 -- Bullet Statistics
-local BULLET_SPEED <const> = BASE_SPEED * 4
-local BULLET_DAMAGE <const> = 10
+local BULLET_SPEED_PER_SECOND = BASE_SPEED_PER_SECOND * 4
+local BULLET_SPEED_PER_TICK = BULLET_SPEED_PER_SECOND / TICKS_PER_SECOND
+local BULLET_DAMAGE = 10
 
 -- Melee Statistics
-local MELEE_RANGE <const> = 2
-local MELEE_DAMAGE <const> = 20
+local MELEE_RANGE = 2
+local MELEE_DAMAGE = 20
 
 -- Circle of Deatch Statistics (per tick)
-local COD_DAMAGE <const> = 1
+local COD_DAMAGE = 1
 
 
 -------------
@@ -87,7 +88,7 @@ end
 
 -- Updates the cooldowns
 -- Should be called every tick
-function update_cooldowns():
+function update_cooldowns()
     if cooldowns.dash > 0 then
         cooldowns.dash = cooldowns.dash - 1
     end
@@ -115,7 +116,7 @@ end
 -- Called every tick
 -- @param me The bot
 function bot_main(me)
-
+    me:move(vec.new(1, 0))
     -- Administrative Functions
     update_cooldowns()
 end
