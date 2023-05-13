@@ -44,13 +44,6 @@ local COD_DAMAGE = 1
 -- Globals --
 -------------
 
--- Cooldowns
-local cooldowns = {
-    dash = 0,
-    bullet = 0,
-    melee = 0
-}
-
 -- Other players
 -- A list of other players
 -- Each player is a tabel indexed by id with the following fields:
@@ -94,12 +87,24 @@ function norm(vector)
     return vec.distance(vector, vec.new(0, 0))
 end
 
+
+-- Normalise a vector
+-- @param vector to normalise
+-- @return normalised vector
+function normalise(vector)
+    local norm_vec = norm(vector)
+    if norm_vec == 0 then
+        return vector
+    end
+    return div_vec(vector, vec.new(norm_vec, norm_vec))
+end
+
 -- Dot product
 -- @param vec1 First vector
 -- @param vec2 Second vector
 -- @return Dot product of vec1 and vec2
 function dot_vec(vec1, vec2)
-    return vec1.x * vec2.x + vec1.y * vec2.y
+    return vec1:x() * vec2:x() + vec1:y() * vec2:y()
 end
 
 -- Vector div
@@ -107,7 +112,7 @@ end
 -- @param vec2 Second vector
 -- @return vec1 / vec2
 function div_vec(vec1, vec2)
-    return vec.new(vec1.x / vec2.x, vec1.y / vec2.y)
+    return vec.new(vec1:x() / vec2:x(), vec1:y() / vec2:y())
 end
 
 -- Check if floats are close
@@ -138,13 +143,6 @@ end
 -- @param direction The direction to fire the projectile
 function do_projectile(me, direction)
     me:cast(0, direction)
-    cooldowns.bullet = BULLET_COOLDOWN
-end
-
-function do_projectile_at(me, target_pos)
-    local direction = target_pos:sub(me:pos())
-    do_projectile(me, direction)
-    cooldowns.bullet = BULLET_COOLDOWN
 end
 
 function do_projectile_at(me, target_pos)
@@ -160,21 +158,6 @@ end
 function do_dash(me, direction)
     me:cast(1, direction)
     cooldowns.dash = DASH_COOLDOWN
-end
-
-
--- Updates the cooldowns
--- Should be called every tick
-function update_cooldowns()
-    if cooldowns.dash > 0 then
-        cooldowns.dash = cooldowns.dash - 1
-    end
-    if cooldowns.bullet > 0 then
-        cooldowns.bullet = cooldowns.bullet - 1
-    end
-    if cooldowns.melee > 0 then
-        cooldowns.melee = cooldowns.melee - 1
-    end
 end
 
 
@@ -342,21 +325,10 @@ function bot_main(me)
     -- Update enemy positions and cooldowns
     update_others(me)
 
-    -- for index, data in ipairs(others) do
-    --     print(index)
-    
-    --     for key, value in pairs(data) do
-    --         print('\t', key, value)
-    --     end
-    -- end
-
-    shoot_people(me)
-
-    -- me:move(vec.new(1, 0))
-
+    -- Our actions
+    move_toward_cod(me)
     shoot_people(me)
 
     -- Administrative Functions
-    update_cooldowns()
     update_others_cooldowns()
 end
