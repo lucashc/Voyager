@@ -42,5 +42,6 @@ luac.out
 # Exclude Python files
 __pycache__/
 
-# Don't upload images
+# Don't upload results
 plots/
+results/
