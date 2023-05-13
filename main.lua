@@ -48,7 +48,7 @@ local COD_DAMAGE = 1
 -- A list of other players
 -- Each player is a tabel indexed by id with the following fields:
 -- - pos: The player's current position
--- - pos_prev: The player's previous position
+-- - prev_pos: The player's previous position
 -- - direction: Difference between the player's last position and current position
 -- - dash_cooldown: The player's last dash cooldown
 -- - bullet_cooldown: The player's last bullet cooldown
@@ -93,7 +93,7 @@ end
 -- @return normalised vector
 function normalise(vector)
     local norm_vec = norm(vector)
-    if norm_vec == 0 then
+    if norm_vec <= 1e-9 then
         return vector
     end
     return div_vec(vector, vec.new(norm_vec, norm_vec))
@@ -208,16 +208,19 @@ function update_others_bullets(me)
     for _, entity in ipairs(entities) do
         -- Then check bullets
         if entity:type() == "small_proj" then
-            dump_functions(entity)
             local id = entity:id()
             local pos = entity:pos()
             -- print("bullet with id " .. id .. " has position " .. pos:x() .. ", " .. pos:y())
             -- Not seen before
             if bullets[id] == nil then
                 local owner_id = entity:owner_id()
+                if owner_id == me:id() then
+                    goto continue
+                end
 
                 local old_pos = others[owner_id].prev_pos
                 local direction = pos:sub(old_pos)
+                direction = normalise(direction)
 
                 others[owner_id].bullet_cooldown = BULLET_COOLDOWN
                 others[owner_id].bullets_spawned = others[owner_id].bullets_spawned + 1
@@ -232,6 +235,8 @@ function update_others_bullets(me)
                 bullets[id].position = pos
             end
         end
+
+        ::continue::
     end
 end
 
@@ -354,7 +359,6 @@ function move_toward_cod(me)
 end
 
 local shot_players = {}
-local shoot_delay = 0
 
 function try_shoot_player(me, player)
     -- Let's not shoot ourselves
@@ -377,14 +381,9 @@ function try_shoot_player(me, player)
 end
 
 function shoot_people(me)
-    -- Shoot every other turn?
-    if shoot_delay > 0 then
-        shoot_delay = shoot_delay - 1
-    end
-    if shoot_delay ~= 0 then
+    if me:cooldown(0) > 0 then
         return
     end
-    shoot_delay = 10
 
     local close = me:visible()
 
