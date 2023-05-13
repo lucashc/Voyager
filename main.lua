@@ -433,10 +433,10 @@ function perp_dist(our_coord, bullet_coord, bullet_direction)
 end
 
 function danger_perp_dist(dist)
-    if dist < 2 then
+    if dist < 4 then
         return 1
     else
-        return math.exp(-.1*dist)+(1-math.exp(-.1*2))
+        return math.exp(-.1*dist)+(1-math.exp(-.1*4))
     end
 end
 
@@ -485,7 +485,7 @@ function get_all_scores(me, possible_position)
     return player_danger, cod_danger, wall_danger, bullet_danger
 end
 
-local PLAYER_DANGER_WEIGHT = 0.3
+local PLAYER_DANGER_WEIGHT = 0 -- 0.3
 local COD_DANGER_WEIGHT = 2.0
 local BULLET_DANGER_WEIGHT = 1
 local WALL_DANGER_WEIGHT = 0.1
