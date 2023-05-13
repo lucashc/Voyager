@@ -1,6 +1,9 @@
 name: "Upload agent code"
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   upload:
