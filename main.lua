@@ -21,7 +21,7 @@ local BASE_HEALTH = 100
 
 -- Cooldowns
 local DASH_COOLDOWN = 250
-local BULLET_COOLDOWN = 1
+local BULLET_COOLDOWN = 30
 local MELEE_COOLDOWN = 50
 
 -- Dash Speed
@@ -91,12 +91,6 @@ end
 -- @param direction The direction to fire the projectile
 function do_projectile(me, direction)
     me:cast(0, direction)
-    cooldowns.bullet = BULLET_COOLDOWN
-end
-
-function do_projectile_at(me, target_pos)
-    local direction = target_pos:sub(me:pos())
-    do_projectile(me, direction)
     cooldowns.bullet = BULLET_COOLDOWN
 end
 
@@ -194,10 +188,25 @@ end
 -- Main Bot code --
 -------------------
 
+MOVE_TARGET = vec.new(250, 230)
+
+function move_toward_cod(me)
+    if vec.distance(me:pos(), FIELD_CENTER) > 30 then
+        me:move(MOVE_TARGET:sub(me:pos()))
+    -- Uncomment to stop bouncing back and forth
+    -- else
+    --    me:move(vec.new(0, 0))
+    end
+end
+
 local shot_players = {}
-local shoot_delay = 0
 
 function try_shoot_player(me, player)
+    -- Let's not shoot ourselves
+    if me:id() == player:id() then
+        return false
+    end
+
     local id = player:id()
     if shot_players[id] == nil then
         shot_players[id] = 0
@@ -214,13 +223,9 @@ end
 
 function shoot_people(me)
     -- Shoot every other turn?
-    if shoot_delay > 0 then
-        shoot_delay = shoot_delay - 1
-    end
-    if shoot_delay ~= 0 then
+    if me:cooldown(0) > 0 then
         return
     end
-    shoot_delay = 10
 
     local close = me:visible()
 
@@ -243,13 +248,8 @@ end
 -- Called every tick
 -- @param me The bot
 function bot_main(me)
+    move_toward_cod(me)
     shoot_people(me)
-
-    -- me:move(vec.new(1, 0))
-
-    shoot_people(me)
-
-    -- me:move(vec.new(1, 0))
 
     -- Administrative Functions
     update_cooldowns()
