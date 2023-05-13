@@ -133,7 +133,6 @@ end
 function do_melee(me)
     local fake_direction = vec.new(0, 0)
     me:cast(2, fake_direction)
-    cooldowns.melee = MELEE_COOLDOWN
 end
 
 
@@ -157,7 +156,6 @@ end
 -- @param direction The direction to dash
 function do_dash(me, direction)
     me:cast(1, direction)
-    cooldowns.dash = DASH_COOLDOWN
 end
 
 
