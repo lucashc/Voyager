@@ -13,7 +13,7 @@ local FIELD_CENTER = vec.new(FIELD_SIZE / 2, FIELD_SIZE / 2)
 local TICKS_PER_SECOND = 30
 
 -- Base Speed
-local BASE_SPEED_PER_SECOND = 1
+local BASE_SPEED_PER_SECOND = 30
 local BASE_SPEED_PER_TICK = BASE_SPEED_PER_SECOND / TICKS_PER_SECOND
 
 -- Base Health
@@ -21,7 +21,7 @@ local BASE_HEALTH = 100
 
 -- Cooldowns
 local DASH_COOLDOWN = 250
-local BULLET_COOLDOWN = 30
+local BULLET_COOLDOWN = 60
 local MELEE_COOLDOWN = 50
 
 -- Dash Speed
@@ -154,6 +154,10 @@ function count_table(table)
     return count
 end
 
+
+function is_out_of_bounds(vec1)
+    return vec1:x() < 0 or vec1:x() > FIELD_SIZE or vec1:y() < 0 or vec1:y() > FIELD_SIZE
+end
 ---------------------------
 -- Our Agent's functions --
 ---------------------------
@@ -293,7 +297,6 @@ end
 -- Evaluation --
 ----------------
 
-
 function proximity_score(position, player)
     -- Proximity
     local distance = vec.distance(current_position, player.pos[1])
@@ -301,7 +304,10 @@ function proximity_score(position, player)
     if distance < 2 then
         distance_score = 1
     else
-        distance_score = 1 / (distance + 0.25)
+        distance_score = -math.exp((distance-2)/40)+2
+        if distance_score < 0 then
+            distance_score = 0
+        end
     end
     return distance_score
 end
@@ -319,16 +325,15 @@ end
 
 
 function aggressive_score(position, player)
-    local aggressive_score = player.bullets_spawned / (num_ticks / BULLET_COOLDOWN)
+    local aggressive_score = player.bullets_spawned / (num_ticks / BULLET_COOLDOWN + 1)
     return aggressive_score
 end
 
 
-local DANGER_PLAYER_DASH_COOLDOWN = 0.10
-local DANGER_PLAYER_PROXIMITY = 0.45
-local DANGER_PLAYER_DIRECTION = 0.15
-local DANGER_PLAYER_AGGRESSIVE = 0.15
-local DANGER_PLAYER_MOBILITY = 0.15
+local DANGER_PLAYER_DASH_COOLDOWN = 0.05
+local DANGER_PLAYER_DIRECTION = 0.5
+local DANGER_PLAYER_AGGRESSIVE = 0.20
+local DANGER_PLAYER_MOBILITY = 0.25
 
 -- Evaluate other players
 -- - cooldown: (max_cooldown - player_cooldown) / max_cooldown
@@ -485,10 +490,10 @@ function get_all_scores(me, possible_position)
     return player_danger, cod_danger, wall_danger, bullet_danger
 end
 
-local PLAYER_DANGER_WEIGHT = 0 -- 0.3
+local PLAYER_DANGER_WEIGHT = 0.5 -- 0.3
 local COD_DANGER_WEIGHT = 2.0
 local BULLET_DANGER_WEIGHT = 1
-local WALL_DANGER_WEIGHT = 0.1
+local WALL_DANGER_WEIGHT = 0.0
 
 function score_move(me, possible_position)
     local player, cod, wall, bullet = get_all_scores(me, possible_position)
@@ -497,18 +502,23 @@ function score_move(me, possible_position)
 end
 
 
-function determine_best_move(me, current_position)
+function determine_best_move(me, current_position, speed)
     -- Note, high score is BAD!
     local best_move = nil
     local best_score = 1000000
 
     for _, move in pairs(MOVE_DIRECTIONS) do
-        local new_position = current_position:add(mul_scalar_vec(BASE_SPEED_PER_TICK, normalise(move)))
+        local new_position = current_position:add(mul_scalar_vec(speed, normalise(move)))
+        if is_out_of_bounds(new_position) then
+            print("Move out of bounds")
+            goto continue
+        end
         local score = score_move(me, new_position)
         if score < best_score then
             best_score = score
             best_move = move
         end
+        ::continue::
     end
 
     local player, cod, wall, bullet = get_all_scores(me, current_position)
@@ -543,23 +553,25 @@ function spell_people(me)
     end
 
     -- if oppenents are close... run!!
-    if min_distance<= distance_to_run then
+    if min_distance <= distance_to_run then
         -- if dash cooldown 
-        if me:cooldown(1)==0 then
-            -- TODO add dash
-            local direction = determine_best_move(me, me:pos(), true)
+        print("cooldown")
+        print(me:cooldown(1))
+        if me:cooldown(1) <= 0 then
+            local direction = determine_best_move(me, me:pos(), DASH_SPEED)
             return 1, direction
         -- we cannot run, so might as well stab
-        elseif min_distance<=2 and me:cooldown(2)==0 then
+        elseif min_distance <= 2 and me:cooldown(2) <= 0 then
             local cp_pos = closest_player.pos[1]
             return 2, cp_pos:sub(me:pos())
         end
+    elseif me:cooldown(0) <= 0 then
+        local dp_pos = dangerous_player.pos[1]
+        -- could consider where the enemy is moving
+        return 0, dp_pos:sub(me:pos())
+    else
+        return nil, nil
     end
-
-    -- shoot at the most dangerous player
-    local dp_pos = dangerous_player.pos[1]
-    -- could consider where the enemy is moving
-    return 0, dp_pos:sub(me:pos())
 end
 
 
@@ -581,12 +593,19 @@ function bot_main(me)
     update_others(me)
 
     -- Our actions
-    local best_move = determine_best_move(me, me:pos())
-    me:move(best_move)
+    local best_move = determine_best_move(me, me:pos(), BASE_SPEED_PER_TICK)
 
     -- Spell casting
     local spell, direction = spell_people(me)
-    me:cast(spell, direction)
+    if spell ~= nil then
+        me:cast(spell, direction)
+    end
+
+    if spell ~= 1 then
+        me:move(best_move)
+    else
+        print("DASH")
+    end
 
     PLAYER_DANGER_WEIGHT = PLAYER_DANGER_WEIGHT*0.999
 
