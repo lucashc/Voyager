@@ -279,13 +279,13 @@ function update_others_bullets(me)
                 others[owner_id].bullets_spawned = others[owner_id].bullets_spawned + 1
 
                 bullets[id] = {
-                    owner_id = owner_id,
                     position = bullet_pos,
                     direction = direction
                 }
                 -- print("Adding bullet")
             -- Seen before
             else
+                bullets[id].direction = bullet_pos:sub(bullets[id].position)
                 bullets[id].position = bullet_pos
             end
         end
