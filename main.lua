@@ -47,14 +47,17 @@ local COD_DAMAGE = 1
 -- Other players
 -- A list of other players
 -- Each player is a tabel indexed by id with the following fields:
--- - pos: The player's last position
+-- - pos: The player's current position
+-- - pos_prev: The player's previous position
 -- - direction: Difference between the player's last position and current position
 -- - dash_cooldown: The player's last dash cooldown
+-- - bullet_cooldown: The player's last bullet cooldown
+-- - bullets_spawned: Number of bullets spawned by the player for the entire game
 local others = {}
 
 -- Bullets in the air
 -- List of all bullets
--- - id: The bullet's id (might be unstable)
+-- - id: The bullet's id (now stable!)
 -- - position: The bullet's position
 -- - direction: The bullet's direction
 local bullets = {}
@@ -162,8 +165,7 @@ end
 -- Other Agent's functions --
 -----------------------------
 
-function update_others(me)
-    -- Get all entities
+function update_others_players(me)
     local entities = me:visible()
     -- Update other players
     for _, entity in ipairs(entities) do
@@ -180,40 +182,74 @@ function update_others(me)
             if others[id] == nil then
                 others[id] = {
                     pos = pos,
+                    prev_pos = pos,
                     direction = vec.new(0, 0),
-                    dash_cooldown = 0
+                    dash_cooldown = 0,
+                    bullet_cooldown = 0,
+                    bullets_spawned = 0
                 }
             -- Seen before
             else
                 -- Check if dashed
                 if vec.distance(pos, others[id].pos) > BASE_SPEED_PER_TICK then
                     others[id].dash_cooldown = DASH_COOLDOWN
-                elseif others[id].dash_cooldown > 0 then
-                    others[id].dash_cooldown = others[id].dash_cooldown - 1
                 end
                 -- Update
                 others[id].direction = pos:sub(others[id].pos)
+                others[id].prev_pos = others[id].pos
                 others[id].pos = pos
-            end
-        -- Then check bullets
-        elseif entity:type() == "bullet" then
-            local id = entity:id()
-            local pos = entity:pos()
-            -- Not seen before
-            if bullets[id] == nil then
-                bullets[id] = {
-                    position = pos,
-                    direction = vec.new(0, 0)
-                }
-            -- Seen before
-            else
-                bullets[id] = {
-                    position = pos,
-                    direction = pos:sub(bulles[id].pos)
-                }
             end
         end
         ::continue::
+    end
+end
+
+function update_others_bullets(me)
+    local entities = me:visible()
+    -- Update other players
+    for _, entity in ipairs(entities) do
+        -- Then check bullets
+        if entity:type() == "small_proj" then
+            dump_functions(entity)
+            local id = entity:id()
+            local pos = entity:pos()
+            -- print("bullet with id " .. id .. " has position " .. pos:x() .. ", " .. pos:y())
+            -- Not seen before
+            if bullets[id] == nil then
+                local owner_id = entity:owner_id()
+
+                local old_pos = others[owner_id].prev_pos
+                local direction = pos:sub(old_pos)
+
+                others[owner_id].bullet_cooldown = BULLET_COOLDOWN
+                others[owner_id].bullets_spawned = others[owner_id].bullets_spawned + 1
+
+                bullets[id] = {
+                    owner_id = owner_id,
+                    position = pos,
+                    direction = direction
+                }
+            -- Seen before
+            else
+                bullets[id].position = pos
+            end
+        end
+    end
+end
+
+function update_others(me)
+    update_others_players(me)
+    update_others_bullets(me)
+end
+
+function update_others_cooldowns(me)
+    for _, player in pairs(others) do
+        if player.dash_cooldown > 0 then
+            player.dash_cooldown = player.dash_cooldown - 1
+        end
+        if player.bullet_cooldown > 0 then
+            player.bullet_cooldown = player.bullet_cooldown - 1
+        end
     end
 end
 
@@ -286,9 +322,13 @@ end
 -- Called every tick
 -- @param me The bot
 function bot_main(me)
+    -- Update enemy positions and cooldowns
+    update_others(me)
+
+    -- Our actions
     move_toward_cod(me)
     shoot_people(me)
 
     -- Administrative Functions
-    update_others(me)
+    update_others_cooldowns()
 end
