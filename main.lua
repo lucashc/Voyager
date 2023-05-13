@@ -339,9 +339,9 @@ end
 
 
 local DANGER_PLAYER_DASH_COOLDOWN = 0.05
-local DANGER_PLAYER_DIRECTION = 0.5
+local DANGER_PLAYER_DIRECTION = 0 -- 0.5
 local DANGER_PLAYER_AGGRESSIVE = 0.20
-local DANGER_PLAYER_MOBILITY = 0.25
+local DANGER_PLAYER_MOBILITY = 0 -- 0.25
 
 -- Evaluate other players
 -- - cooldown: (max_cooldown - player_cooldown) / max_cooldown
@@ -511,8 +511,8 @@ function get_all_scores(me, possible_position)
     return player_danger, cod_danger, wall_danger, bullet_danger
 end
 
-local PLAYER_DANGER_WEIGHT = 0.3
-local COD_DANGER_WEIGHT = 1
+local PLAYER_DANGER_WEIGHT = 0.15
+local COD_DANGER_WEIGHT = 2
 local BULLET_DANGER_WEIGHT = 1
 local WALL_DANGER_WEIGHT = 0.0
 
