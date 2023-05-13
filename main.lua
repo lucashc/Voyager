@@ -71,12 +71,24 @@ function norm(vector)
     return vec.distance(vector, vec.new(0, 0))
 end
 
+
+-- Normalise a vector
+-- @param vector to normalise
+-- @return normalised vector
+function normalise(vector)
+    local norm_vec = norm(vector)
+    if norm_vec == 0 then
+        return vector
+    end
+    return div_vec(vector, vec.new(norm_vec, norm_vec))
+end
+
 -- Dot product
 -- @param vec1 First vector
 -- @param vec2 Second vector
 -- @return Dot product of vec1 and vec2
 function dot_vec(vec1, vec2)
-    return vec1.x * vec2.x + vec1.y * vec2.y
+    return vec1:x() * vec2:x() + vec1:y() * vec2:y()
 end
 
 -- Vector div
@@ -84,7 +96,7 @@ end
 -- @param vec2 Second vector
 -- @return vec1 / vec2
 function div_vec(vec1, vec2)
-    return vec.new(vec1.x / vec2.x, vec1.y / vec2.y)
+    return vec.new(vec1:x() / vec2:x(), vec1:y() / vec2:y())
 end
 
 -- Check if floats are close
