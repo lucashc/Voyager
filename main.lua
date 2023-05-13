@@ -97,6 +97,12 @@ end
 function do_projectile_at(me, target_pos)
     local direction = target_pos:sub(me:pos())
     do_projectile(me, direction)
+    cooldowns.bullet = BULLET_COOLDOWN
+end
+
+function do_projectile_at(me, target_pos)
+    local direction = target_pos:sub(me:pos())
+    do_projectile(me, direction)
 end
 
 
@@ -200,6 +206,7 @@ function move_toward_cod(me)
 end
 
 local shot_players = {}
+local shoot_delay = 0
 
 function try_shoot_player(me, player)
     -- Let's not shoot ourselves
@@ -223,9 +230,13 @@ end
 
 function shoot_people(me)
     -- Shoot every other turn?
-    if me:cooldown(0) > 0 then
+    if shoot_delay > 0 then
+        shoot_delay = shoot_delay - 1
+    end
+    if shoot_delay ~= 0 then
         return
     end
+    shoot_delay = 10
 
     local close = me:visible()
 
@@ -248,7 +259,10 @@ end
 -- Called every tick
 -- @param me The bot
 function bot_main(me)
-    move_toward_cod(me)
+    shoot_people(me)
+
+    -- me:move(vec.new(1, 0))
+
     shoot_people(me)
 
     -- Administrative Functions
