@@ -24,6 +24,10 @@ def distance(pos1, pos2):
     return ((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2) ** 0.5
 
 
+def bool_to_checkmark(b):
+    return "✅" if b else "❌"
+
+
 def analyse_game(game):
     players = get_players(game)
     our_moves = get_our_moves(game)
@@ -42,7 +46,7 @@ def analyse_game(game):
     print("| --- | --- | --- |")
     print(f"| {len(our_moves)} | {len(players)} | {remaining_players} |")
     print()
-    print(f"* Survive? {health[-1] > 0}")
+    print(f"* Survive? {bool_to_checkmark(health[-1] > 0)}")
     print(f"* Our health at the end of the game: {health[-1]}")
     print(f"* Last COD radius was {cod_moves[-1]['r']}")
-    print(f"* Inside COD at end of game: {distance(final_position, final_cod_position) < final_cod_radius}")
+    print(f"* Inside COD at end of game: {bool_to_checkmark(distance(final_position, final_cod_position) < final_cod_radius)}")
