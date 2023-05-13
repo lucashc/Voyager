@@ -71,6 +71,37 @@ local bullets = {}
 -- Helper Functions --
 ----------------------
 
+-- Returns the norm of a vector
+-- @param vector to take norm of
+-- @return norm of vector
+function norm(vector)
+    return vec.distance(vector, vec.new(0, 0))
+end
+
+-- Dot product
+-- @param vec1 First vector
+-- @param vec2 Second vector
+-- @return Dot product of vec1 and vec2
+function dot_vec(vec1, vec2)
+    return vec1.x * vec2.x + vec1.y * vec2.y
+end
+
+-- Vector div
+-- @param vec1 First vector
+-- @param vec2 Second vector
+-- @return vec1 / vec2
+function div_vec(vec1, vec2)
+    return vec.new(vec1.x / vec2.x, vec1.y / vec2.y)
+end
+
+-- Check if floats are close
+-- @param num1 First number
+-- @param num2 Second number
+-- @return true if num1 and num2 are close, false otherwise
+function is_close(num1, num2)
+    return math.abs(num1 - num2) < 0.0001
+end
+
 ---------------------------
 -- Our Agent's functions --
 ---------------------------
