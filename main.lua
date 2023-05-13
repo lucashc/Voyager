@@ -74,6 +74,19 @@ local bullets = {}
 -- Helper Functions --
 ----------------------
 
+-- Print all the functions in an object's metatable
+function dump_functions(x)
+    local t = getmetatable(x)
+
+    if t == nil then
+        return
+    end
+
+    for k, v in pairs(t) do
+        print(k, v)
+    end
+end
+
 -- Returns the norm of a vector
 -- @param vector to take norm of
 -- @return norm of vector
@@ -197,8 +210,6 @@ function update_others_players(me)
                 -- Check if dashed
                 if vec.distance(pos, others[id].pos) > BASE_SPEED_PER_TICK then
                     others[id].dash_cooldown = DASH_COOLDOWN
-                elseif others[id].dash_cooldown > 0 then
-                    others[id].dash_cooldown = others[id].dash_cooldown - 1
                 end
                 -- Update
                 others[id].direction = pos:sub(others[id].pos)
@@ -216,34 +227,28 @@ function update_others_bullets(me)
     for _, entity in ipairs(entities) do
         -- Then check bullets
         if entity:type() == "small_proj" then
+            dump_functions(entity)
             local id = entity:id()
             local pos = entity:pos()
             -- print("bullet with id " .. id .. " has position " .. pos:x() .. ", " .. pos:y())
             -- Not seen before
             if bullets[id] == nil then
-                for _, player in ipairs(others) do
-                    print("distance is " .. vec.distance(pos, player.prev_pos))
-                    print("bullet speed is " .. BULLET_SPEED_PER_TICK)
-                    if is_close(vec.distance(pos, player.prev_pos), BULLET_SPEED_PER_TICK) then
-                        player.bullet_cooldown = BULLET_COOLDOWN
-                        direction = pos:sub(player.prev_pos)
-                        player.bullets_spawned = player.bullets_spawned + 1
-                        goto continue_bullet
-                    elseif player.bullet_cooldown > 0 then
-                        player.bullet_cooldown = player.bullet_cooldown - 1
-                    end
-                end
-                ::continue_bullet::
+                local owner_id = entity:owner_id()
+
+                local old_pos = others[owner_id].prev_pos
+                local direction = pos:sub(old_pos)
+
+                others[owner_id].bullet_cooldown = BULLET_COOLDOWN
+                others[owner_id].bullets_spawned = others[owner_id].bullets_spawned + 1
+
                 bullets[id] = {
+                    owner_id = owner_id,
                     position = pos,
                     direction = direction
                 }
             -- Seen before
             else
-                bullets[id] = {
-                    position = pos,
-                    direction = pos:sub(bullets[id].pos)
-                }
+                bullets[id].position = pos
             end
         end
     end
@@ -252,6 +257,17 @@ end
 function update_others(me)
     update_others_players(me)
     update_others_bullets(me)
+end
+
+function update_others_cooldowns(me)
+    for _, player in pairs(others) do
+        if player.dash_cooldown > 0 then
+            player.dash_cooldown = player.dash_cooldown - 1
+        end
+        if player.bullet_cooldown > 0 then
+            player.bullet_cooldown = player.bullet_cooldown - 1
+        end
+    end
 end
 
 -------------------
@@ -342,4 +358,5 @@ function bot_main(me)
 
     -- Administrative Functions
     update_cooldowns()
+    update_others_cooldowns()
 end
