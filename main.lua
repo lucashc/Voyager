@@ -54,14 +54,17 @@ local cooldowns = {
 -- Other players
 -- A list of other players
 -- Each player is a tabel indexed by id with the following fields:
--- - pos: The player's last position
+-- - pos: The player's current position
+-- - pos_prev: The player's previous position
 -- - direction: Difference between the player's last position and current position
 -- - dash_cooldown: The player's last dash cooldown
+-- - bullet_cooldown: The player's last bullet cooldown
+-- - bullets_spawned: Number of bullets spawned by the player for the entire game
 local others = {}
 
 -- Bullets in the air
 -- List of all bullets
--- - id: The bullet's id (might be unstable)
+-- - id: The bullet's id (now stable!)
 -- - position: The bullet's position
 -- - direction: The bullet's direction
 local bullets = {}
@@ -166,8 +169,7 @@ end
 -- Other Agent's functions --
 -----------------------------
 
-function update_others(me)
-    -- Get all entities
+function update_others_players(me)
     local entities = me:visible()
     -- Update other players
     for _, entity in ipairs(entities) do
@@ -184,8 +186,11 @@ function update_others(me)
             if others[id] == nil then
                 others[id] = {
                     pos = pos,
+                    prev_pos = pos,
                     direction = vec.new(0, 0),
-                    dash_cooldown = 0
+                    dash_cooldown = 0,
+                    bullet_cooldown = 0,
+                    bullets_spawned = 0
                 }
             -- Seen before
             else
@@ -197,28 +202,56 @@ function update_others(me)
                 end
                 -- Update
                 others[id].direction = pos:sub(others[id].pos)
+                others[id].prev_pos = others[id].pos
                 others[id].pos = pos
             end
+        end
+        ::continue::
+    end
+end
+
+function update_others_bullets(me)
+    local entities = me:visible()
+    -- Update other players
+    for _, entity in ipairs(entities) do
         -- Then check bullets
-        elseif entity:type() == "bullet" then
+        if entity:type() == "small_proj" then
             local id = entity:id()
             local pos = entity:pos()
+            -- print("bullet with id " .. id .. " has position " .. pos:x() .. ", " .. pos:y())
             -- Not seen before
             if bullets[id] == nil then
+                for _, player in ipairs(others) do
+                    print("distance is " .. vec.distance(pos, player.prev_pos))
+                    print("bullet speed is " .. BULLET_SPEED_PER_TICK)
+                    if is_close(vec.distance(pos, player.prev_pos), BULLET_SPEED_PER_TICK) then
+                        player.bullet_cooldown = BULLET_COOLDOWN
+                        direction = pos:sub(player.prev_pos)
+                        player.bullets_spawned = player.bullets_spawned + 1
+                        goto continue_bullet
+                    elseif player.bullet_cooldown > 0 then
+                        player.bullet_cooldown = player.bullet_cooldown - 1
+                    end
+                end
+                ::continue_bullet::
                 bullets[id] = {
                     position = pos,
-                    direction = vec.new(0, 0)
+                    direction = direction
                 }
             -- Seen before
             else
                 bullets[id] = {
                     position = pos,
-                    direction = pos:sub(bulles[id].pos)
+                    direction = pos:sub(bullets[id].pos)
                 }
             end
         end
-        ::continue::
     end
+end
+
+function update_others(me)
+    update_others_players(me)
+    update_others_bullets(me)
 end
 
 -------------------
@@ -290,6 +323,17 @@ end
 -- Called every tick
 -- @param me The bot
 function bot_main(me)
+    -- Update enemy positions and cooldowns
+    update_others(me)
+
+    -- for index, data in ipairs(others) do
+    --     print(index)
+    
+    --     for key, value in pairs(data) do
+    --         print('\t', key, value)
+    --     end
+    -- end
+
     shoot_people(me)
 
     -- me:move(vec.new(1, 0))
@@ -298,5 +342,4 @@ function bot_main(me)
 
     -- Administrative Functions
     update_cooldowns()
-    update_others(me)
 end
