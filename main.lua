@@ -334,25 +334,38 @@ function score_danger_player(current_position, player)
 end
 
 
+function next_cod(ticks, radius)
+    if ticks > 1500 then
+        return 1700, 10
+    elseif ticks > 1200 then
+        return 1500, 40
+    elseif ticks > 800 then
+        return 1200, 90
+    elseif ticks > 0 then
+        return 800, 500
+    end
+end
+
+
 local DANGER_COD = 100
 
 -- Evaluate COD
--- - Zero if inside
--- - Outside: 1 / ((distance - radius)/radius + 0.5) / 2
--- @param me The bot
 -- @return The score of the COD
 function score_danger_cod(me, current_position)
-    local cod = me:cod()
-    -- No COD yet
-    if cod:x() == -1 then
+    -- TODO: fill with tick counter
+    time = 0
+    radius = norm(current_position)
+
+    next_cod_time, next_cod_radius = next_cod(time, radius)
+
+    if radius <= next_cod_radius then
+        -- Inside future COD, safe for now
         return 0
     end
-    local dist_to_cod = vec.distance(current_position, vec.new(cod:x(), cod:y()))
-    if dist_to_cod < cod:radius() then
-        return 0
-    else
-        return 1 / ((dist_to_cod - cod:radius())/cod:radius() + 0.5) / 2 * DANGER_COD
-    end
+
+    remaining_time = next_cod_time - time
+    time_to_reach_cod = (radius - next_cod_radius) / BASE_SPEED_PER_SECOND
+    return math.max(0, 1 - 0.3 * remaining_time / time_to_reach_cod) * DANGER_COD
 end
 
 
