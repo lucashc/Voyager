@@ -294,68 +294,6 @@ end
 -- Evaluation --
 ----------------
 
-function find_line_eq(pos1, pos2)
-    local a=pos2:y()-pos1:y()
-    local b=pos1:x()-pos2:x()
-    local c= a*(-pos1:x())-pos1:y()*b
-    return a,b,c
-end
-
-function perp_dist(our_coord, bullet_coord, bullet_direction)
-    local a,b,c = find_line_eq(bullet_coord, bullet_coord:add(bullet_direction))
-    local dist = math.abs(a*our_coord:x()+b*our_coord:y()+c)/math.sqrt(a*a+b*b)
-    return dist
-end
-
-function danger_perp_dist(dist)
-    if dist < 2 then
-        return 1
-    else
-        return math.exp(-.1*dist)+(1-math.exp(-.1*2))
-    end
-    return dist
-end
-
-function danger_bullet_proximity(our_pos, bullet)
-    local dist = vec.distance(our_pos, bullet.position)
-    -- if bullet is moving away, then no danger
-    if dist < vec.distance(our_pos, bullet.position:add(bullet.direction)) then
-        -- print("bullet is moving away")
-        return 0
-    elseif dist<8 then
-        return 1
-    else
-        return math.exp(-.1*dist) + (1-math.exp(-.1*8))
-    end
-end
-
-function danger_of_position(our_pos)
-    local total_danger = 0
-    -- print("entering danger_of_position")
-    for _, bullet in pairs(bullets) do
-        -- print("danger_bullet_proximity" .. danger_bullet_proximity(our_pos, bullet))
-        -- print("danger_perp_dist" .. danger_perp_dist(perp_dist(our_pos, bullet.position, bullet.direction)))
-        local danger = danger_bullet_proximity(our_pos, bullet)*danger_perp_dist(perp_dist(our_pos, bullet.position, bullet.direction))
-        total_danger = total_danger + danger
-    end
-    return total_danger
-end
-
-function find_best_pos(our_pos)
-    local best_dir = vec.new(0,0)
-    local best_danger = danger_of_position(our_pos)
-    -- print("danger for not moving pos: " .. best_danger)
-    for _, dir in ipairs(directions) do
-        local new_danger = danger_of_position(our_pos:add(dir))
-        if new_danger<best_danger then
-            best_danger = new_danger
-            best_dir = dir
-        end
-        -- print("danger for direction " .. dir:x() .. ", " .. dir:y() .. ": " .. new_danger)
-    end
-    return best_dir
-end
-
 local DANGER_PLAYER_DASH_COOLDOWN = 0.10
 local DANGER_PLAYER_PROXIMITY = 0.45
 local DANGER_PLAYER_DIRECTION = 0.15
@@ -461,6 +399,51 @@ function score_danger_walls(current_position)
     return 1 / (dist_to_wall+1) 
 end
 
+function find_line_eq(pos1, pos2)
+    local a=pos2:y()-pos1:y()
+    local b=pos1:x()-pos2:x()
+    local c= a*(-pos1:x())-pos1:y()*b
+    return a,b,c
+end
+
+function perp_dist(our_coord, bullet_coord, bullet_direction)
+    local a,b,c = find_line_eq(bullet_coord, bullet_coord:add(bullet_direction))
+    local dist = math.abs(a*our_coord:x()+b*our_coord:y()+c)/math.sqrt(a*a+b*b)
+    return dist
+end
+
+function danger_perp_dist(dist)
+    if dist < 2 then
+        return 1
+    else
+        return math.exp(-.1*dist)+(1-math.exp(-.1*2))
+    end
+end
+
+function danger_bullet_proximity(our_pos, bullet)
+    local dist = vec.distance(our_pos, bullet.position)
+    -- if bullet is moving away, then no danger
+    if dist < vec.distance(our_pos, bullet.position:add(bullet.direction)) then
+        -- print("bullet is moving away")
+        return 0
+    elseif dist<8 then
+        return 1
+    else
+        return math.exp(-.1*dist) + (1-math.exp(-.1*8))
+    end
+end
+
+function score_danger_bullet(our_pos)
+    local total_danger = 0
+    -- print("entering danger_of_position")
+    for _, bullet in pairs(bullets) do
+        -- print("danger_bullet_proximity" .. danger_bullet_proximity(our_pos, bullet))
+        -- print("danger_perp_dist" .. danger_perp_dist(perp_dist(our_pos, bullet.position, bullet.direction)))
+        local danger = danger_bullet_proximity(our_pos, bullet)*danger_perp_dist(perp_dist(our_pos, bullet.position, bullet.direction))
+        total_danger = total_danger + danger
+    end
+    return total_danger
+end
 
 -- Possible Next moves
 local MOVE_DIRECTIONS = {
@@ -476,7 +459,7 @@ local MOVE_DIRECTIONS = {
 }
 
 local PLAYER_DANGER_WEIGHT = 0.8
-local COD_DANGER_WEIGHT = 0.5
+local COD_DANGER_WEIGHT = 5.0
 local BULLET_DANGER_WEIGHT = 1
 local WALL_DANGER_WEIGHT = 0.1
 
@@ -491,15 +474,15 @@ function score_move(me, possible_position)
     player_danger = player_danger / number_of_players
 
     -- Evaluate COD
-    cod_danger = score_danger_cod(me, possible_position)
+    local cod_danger = score_danger_cod(me, possible_position)
 
     -- Evaluate walls
-    wall_danger = score_danger_walls(possible_position)
+    local wall_danger = score_danger_walls(possible_position)
 
-    -- print(player_danger)
-    -- print(cod_danger)
+    -- Evaluate bullets
+    local bullet_danger = score_danger_bullet(possible_position)
 
-    return PLAYER_DANGER_WEIGHT * player_danger + COD_DANGER_WEIGHT * cod_danger + WALL_DANGER_WEIGHT * wall_danger
+    return PLAYER_DANGER_WEIGHT * player_danger + COD_DANGER_WEIGHT * cod_danger + WALL_DANGER_WEIGHT * wall_danger + BULLET_DANGER_WEIGHT * bullet_danger
 end
 
 
@@ -591,13 +574,9 @@ function bot_main(me)
     update_others(me)
 
     -- Our actions
-    best_move = determine_best_move(me, me:pos())
+    local best_move = determine_best_move(me, me:pos())
     me:move(best_move)
     shoot_people(me)
-
-    -- local dir = find_best_pos(me:pos())
-    -- -- print("Direction that is best is " .. dir:x() .. ", " .. dir:y())
-    -- me:move(dir)
 
     -- Administrative Functions
     update_others_cooldowns()
