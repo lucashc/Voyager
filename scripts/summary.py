@@ -36,7 +36,6 @@ def main():
     game_data = fetch_game(token, game_id)
 
     print()
-    print("### Game Analysis")
     analyse_game(game_data)
 
 
