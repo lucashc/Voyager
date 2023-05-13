@@ -413,7 +413,7 @@ function score_danger_cod(me, current_position)
     local cod_center = vec.new(cod:x(), cod:y())
     local radius = vec.distance(current_position, cod_center)
 
-    local margin_radius = cod:radius() * 0.8
+    local margin_radius = math.max(1, cod:radius() - 5)
 
     return math.exp(math.max(0, radius - margin_radius) / margin_radius * 2)
 end
