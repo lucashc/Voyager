@@ -410,8 +410,6 @@ function score_danger_cod(me, current_position)
         return 0
     end
 
-    print("Cod: " .. cod:x() .. ", " .. cod:y() .. "," .. cod:radius())
-
     local cod_center = vec.new(cod:x(), cod:y())
     local radius = vec.distance(current_position, cod_center)
 
@@ -548,19 +546,19 @@ end
 function spell_people(me)
     -- find: 1. clostest player, 2. most threatening player (hitman)
     local distance_to_run = 3
-    local closest_player = others[1]
+    local closest_player = nil
     local min_distance = FIELD_SIZE
-    local dangerous_player = others[1]
+    local dangerous_player = nil
     local max_danger = 0
 
     for _, player in pairs(others) do
         local player_danger = proximity_score(me:pos(), player) *(1+ direction_score(me:pos(), player))
-        if player_danger>max_danger then
+        if player_danger>=max_danger then
             max_danger = player_danger
             dangerous_player = player
         end
         local player_distance = vec.distance(me:pos(), player.pos[1])
-        if player_distance<min_distance then
+        if player_distance<=min_distance then
             min_distance = player_distance
             closest_player = player
         end
