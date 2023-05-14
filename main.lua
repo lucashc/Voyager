@@ -507,7 +507,7 @@ function danger_bullet_proximity(our_pos, bullet)
         -- print("bullet is moving away")
         return 0
     else
-        return (exp_smoothing(5 * adjust_smoothing(), 15 * adjust_smoothing(), dist) + exp_smoothing(15 * adjust_smoothing(), 400 * adjust_smoothing(), dist)) * 0.5
+        return (exp_smoothing(5, 15, dist) + exp_smoothing(15, 400, dist)) * 0.5
     end
 end
 
