@@ -544,7 +544,7 @@ function get_all_scores(me, possible_position)
 end
 
 local PLAYER_DANGER_WEIGHT = 0.15
-local COD_DANGER_WEIGHT = 2
+local COD_DANGER_WEIGHT = 4
 local BULLET_DANGER_WEIGHT = 4
 local WALL_DANGER_WEIGHT = 0.0
 
