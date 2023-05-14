@@ -587,7 +587,7 @@ function spell_people(me)
     -- find: 1. clostest player, 2. most threatening player (hitman)
     local distance_to_run = 2.1
     local closest_player = nil
-    local min_distance = FIELD_SIZE
+    local min_distance = FIELD_SIZE * 1.5
     local dangerous_player = nil
     local max_danger = 0
 
