@@ -530,9 +530,6 @@ function get_all_scores(me, possible_position)
     for _, player in pairs(others) do
         player_danger = player_danger + score_danger_player(me, possible_position, player)
     end
-    -- if number_of_players > 3 then
-    --     player_danger = player_danger * 3 / number_of_players
-    -- end
 
     -- Evaluate COD
     local cod_danger = score_danger_cod(me, possible_position)
@@ -547,7 +544,7 @@ function get_all_scores(me, possible_position)
 end
 
 local PLAYER_DANGER_WEIGHT = 0.15
-local COD_DANGER_WEIGHT = 10
+local COD_DANGER_WEIGHT = 4
 local BULLET_DANGER_WEIGHT = 4
 local WALL_DANGER_WEIGHT = 0.0
 
