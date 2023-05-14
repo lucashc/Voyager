@@ -66,15 +66,6 @@ local others = {}
 local bullets = {}
 
 
--- Array of directions to sample
-local MOVE_DIRECTIONS = {}
-NUM_DIRECTIONS = 24
-for i = 1, NUM_DIRECTIONS do
-    local theta = i/NUM_DIRECTIONS * 2 * math.pi
-    MOVE_DIRECTIONS[i] = vec.new(math.cos(theta), math.sin(theta))
-end
-
-
 ----------------------
 -- Helper Functions --
 ----------------------
@@ -561,6 +552,14 @@ end
 
 
 function determine_best_move(me, current_position, speed)
+    -- Array of directions to sample
+    local MOVE_DIRECTIONS = {}
+    NUM_DIRECTIONS = 24
+    for i = 1, NUM_DIRECTIONS do
+        local theta = i/NUM_DIRECTIONS * 2 * math.pi
+        MOVE_DIRECTIONS[i] = vec.new(math.cos(theta), math.sin(theta))
+    end
+
     -- Note, high score is BAD!
     local best_move = vec.new(0, 0)
     local best_score = score_move(me, current_position)
