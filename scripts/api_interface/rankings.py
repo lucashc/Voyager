@@ -38,6 +38,6 @@ def get_ranking_pretty(token, N_GAMES, progress_disable=True):
             we_are_first = True
         if index >= 10:
             break
-        print(f"  {index+1}. {player}: score {ranking}")
+        print(f"  {index+1}. {player}: {ranking*100:.1f}% wins")
     print()
     print(f"**Are we first? 🤔: {bool_to_checkmark(we_are_first)}**")
