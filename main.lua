@@ -582,21 +582,25 @@ function spell_people(me)
 
     -- if oppenents are close... run!!
     if min_distance <= distance_to_run then
-        -- if dash cooldown 
+        -- Dash if possible and best nonzero move
         if me:cooldown(1) <= 0 then
             local direction = determine_best_move(me, me:pos(), DASH_SPEED)
-            return 1, direction
-        -- we cannot run, so might as well stab
-        elseif min_distance <= 2 and me:cooldown(2) <= 0 then
+            if direction:x() ~= 0 or direction:y() ~= 0 then
+                return 1, direction
+            end
+        end
+        -- if we can't dash, then melee if within range
+        if min_distance <= 2 and me:cooldown(2) <= 0 then
             local cp_pos = closest_player.pos[1]
             return 2, cp_pos:sub(me:pos())
         end
-    elseif me:cooldown(0) <= 0 then
-        local dp_pos = dangerous_player.pos[1]
-        -- could consider where the enemy is moving
-        return 0, dp_pos:sub(me:pos())
-    else
-        return nil, nil
+        -- if we can't dash or melee, then just shoot and run
+        if me:cooldown(0) <= 0 then
+            local dp_pos = dangerous_player.pos[1]
+            return 0, dp_pos:sub(me:pos())
+        else
+            return nil, nil
+        end
     end
 end
 
