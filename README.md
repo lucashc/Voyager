@@ -30,7 +30,7 @@ We push up our changes with `git push`. The code is automatically pushed to the 
 
 ## Further Algorithmic Details
 Our algorithm can be broadly thought about in 3 main blocks.
-- [x] Obstacle avoidance: we solve a discrete constrained optimisation problem in order to calculate the optimum position to move to in order to avoid obstacles. Specifically, we attempt to maximise the perpendicular distance to the bullet trajectories, prioritising bullets that are closer to the user. That is, we attempt to find a new co-ordinate $\boldsymbol{x} = (x,y)$ given the current co-ordinate $\boldsymbol{x}_C$, equations of $n$th bullet trajectories $a_n x + b_n y + c_n=0$, bullet co-ordinates $\boldsymbol{b}_n$ by solving the following problem
+- [x] Obstacle avoidance: we solve a discrete constrained optimisation problem in order to calculate the optimum position to move to in order to avoid obstacles. Specifically, we attempt to maximise the perpendicular distance to the bullet trajectories, prioritising bullets that are closer to the user. That is, we attempt to find a new co-ordinate $\boldsymbol{x} = (x,y)$ given the current co-ordinate $\boldsymbol{x}_C$, equations of the $n$ th bullet trajectories $a_n x + b_n y + c_n=0$ , bullet co-ordinates $\boldsymbol{b}_n$ by solving the following problem
 
 $$\max_{||\boldsymbol{x} - \boldsymbol{x}_c||=1} \sum_n d(\boldsymbol{x}_C, \boldsymbol{b}_n) \frac{|a_n x + b_n y + c_n|}{\sqrt{a_n^2 + b_n^2}} $$
 
