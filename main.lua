@@ -325,20 +325,20 @@ end
 
 function proximity_score(position, player)
     if num_ticks < 1500 then
-        return exp_smoothing(2, 200, vec.distance(current_position, player.pos[1]))
+        return exp_smoothing(2, 200, vec.distance(position, player.pos[1]))
     elseif num_ticks < 2000 then
-        return exp_smoothing(2, 100, vec.distance(current_position, player.pos[1]))
+        return exp_smoothing(2, 100, vec.distance(position, player.pos[1]))
     elseif num_ticks < 2500 then
-        return exp_smoothing(2, 50, vec.distance(current_position, player.pos[1]))
+        return exp_smoothing(2, 50, vec.distance(position, player.pos[1]))
     else
-        return exp_smoothing(2, 25, vec.distance(current_position, player.pos[1]))
+        return exp_smoothing(2, 25, vec.distance(position, player.pos[1]))
     end
 end
 
 
 function direction_score(position, player)
     local direction = normalise(player.direction)
-    local connection_direction = normalise(player.pos[1]:sub(current_position))
+    local connection_direction = normalise(player.pos[1]:sub(position))
     local direction_score = -dot_vec(direction, connection_direction)
     if direction_score < 0 then
         direction_score = 0
@@ -545,7 +545,7 @@ end
 
 local PLAYER_DANGER_WEIGHT = 0.15
 local COD_DANGER_WEIGHT = 2
-local BULLET_DANGER_WEIGHT = 1
+local BULLET_DANGER_WEIGHT = 2
 local WALL_DANGER_WEIGHT = 0.0
 
 function score_move(me, possible_position)
@@ -667,8 +667,6 @@ function bot_main(me)
     else
         print("DASH")
     end
-
-    PLAYER_DANGER_WEIGHT = PLAYER_DANGER_WEIGHT*0.999
 
     -- Administrative Functions
     update_others_cooldowns()
