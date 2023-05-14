@@ -324,7 +324,7 @@ end
 ----------------
 
 function proximity_score(current_position, player)
-    return exp_smoothing(2, 100, vec.distance(current_position, player.pos[1]))
+    return exp_smoothing(2, 200, vec.distance(current_position, player.pos[1]))
 end
 
 
