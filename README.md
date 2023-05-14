@@ -1,7 +1,7 @@
 # Voyager
 Enter the world of SQLillo Royale, where agents fight to the death. Using efficient & novel approaches for obstacle evasion, target acquirement and action choices, we achieve top performance metrics.
 
-[Github](https://github.com/lucashc/Voyager) [Devpost]()
+[Github](https://github.com/lucashc/Voyager) [Devpost](https://devpost.com/software/voyager-o6dauy)
 
 ## Inspiration
 Gaudi's architecture taught us to learn from nature, and it is in this light that we have developed our natural and elegant approach to multiplayer games. We have strived to incorporate natural elements in our work, namely those of hyperboloid surfaces and exponential functions. To this end, we have used these extensively in our agent's decision-making.
@@ -18,6 +18,7 @@ Our algorithm consists of three main steps:
 - [x] Enemy avoidance (bullets & players)
 - [x] Staying in the safe zone
 - [x] Action choice & targetting
+
 Each of these are subject to various complications. For example, the type of play later in the game may be substantially different to earlier in the game.
 ## Github Actions Pipeline
 We were able to make our life much easier by setting up a sophisticated github workflow. Our project required uploading code onto a server in order to determine the performance of our agent. This would be a very manual process, but we were able to have it automatically occur whenever code was pushed onto github. Furthermore, we were also able to automatically generate a summary of our new agent's performance as well.
