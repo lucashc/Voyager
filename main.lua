@@ -617,8 +617,8 @@ function spell_people(me)
         end
     else
         if me:cooldown(0) <= 0 then
-            local dp_pos = dangerous_player.pos[1]
-            return 0, dp_pos:sub(me:pos())
+            local cp_pos = closest_player.pos[1]
+            return 0, cp_pos:sub(me:pos())
         else
             return nil, nil
         end
