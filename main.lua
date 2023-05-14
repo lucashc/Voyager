@@ -206,9 +206,8 @@ end
 -- Other Agent's functions --
 -----------------------------
 
-function update_others_players(me)
+function update_others_players(me, updated_entities)
     local entities = me:visible()
-    local updated_entities = {}
     -- Update other players
     for _, entity in pairs(entities) do
         -- First check players
@@ -245,12 +244,6 @@ function update_others_players(me)
             end
         end
         ::continue::
-    end
-    -- Remove old entities
-    for id, _ in pairs(others) do
-        if updated_entities[id] == nil then
-            others[id] = nil
-        end
     end
 
 end
@@ -294,8 +287,17 @@ function update_others_bullets(me)
 end
 
 function update_others(me)
-    update_others_players(me)
+    local updated_entities = {}
+
+    update_others_players(me, updated_entities)
     update_others_bullets(me)
+
+    -- Remove old entities
+    for id, _ in pairs(others) do
+        if updated_entities[id] == nil then
+            others[id] = nil
+        end
+    end
 end
 
 function update_others_cooldowns(me)

@@ -45,3 +45,4 @@ __pycache__/
 # Don't upload results
 plots/
 results/
+out.txt
