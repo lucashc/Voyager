@@ -445,7 +445,7 @@ function score_danger_cod(me, current_position)
         margin_radius = simulated_cod * 0.8
     end
 
-    return math.exp(math.max(0, radius - margin_radius) / margin_radius * 2)
+    return math.exp(math.max(0, radius - margin_radius) / math.max(1, margin_radius) * 2)
 end
 
 -- Penalize wall distance
