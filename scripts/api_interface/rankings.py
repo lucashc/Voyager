@@ -33,7 +33,7 @@ def get_ranking_pretty(token, N_GAMES, progress_disable=True):
     }
     print(f"* Obtained rankings over {N_GAMES}:")
     print()
-    print(f"### Ranking")
+    print(f"### Ranking with scores")
     print()
     we_are_first = False
     for index, (player, ranking) in enumerate(sorted_rankings.items()):
