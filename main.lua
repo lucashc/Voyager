@@ -635,7 +635,7 @@ function spell_people(me)
         if me:cooldown(0) <= 0 then
             local cp_pos = closest_player.pos[1]
             if num_ticks > 2000 then
-                return 0, cp_pos:add(mul_scalar_vec(BASE_SPEED_PER_TICK, normalise(closest_player.direction))):sub(me:pos())
+                return 0, vec.new(0,0)
             else
                 return 0, cp_pos:sub(me:pos())
             end
