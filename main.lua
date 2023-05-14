@@ -324,7 +324,14 @@ end
 ----------------
 
 function proximity_score(current_position, player)
-    return exp_smoothing(2, 200, vec.distance(current_position, player.pos[1]))
+    if num_ticks<2000 then
+        return exp_smoothing(2, 200, vec.distance(current_position, player.pos[1]))
+    elseif num_ticks<2500 then
+        return exp_smoothing(2, 50, vec.distance(current_position, player.pos[1]))
+    else 
+        return 0
+    end
+    
 end
 
 
