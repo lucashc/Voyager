@@ -7,7 +7,7 @@ N_GAMES = 20
 def main():
     print("## Ranking")
     token = login_and_get_token()
-    print("* Successfully logged in")
+    print("- [x] Successfully logged in")
     get_ranking_pretty(token, N_GAMES, False)
 
 

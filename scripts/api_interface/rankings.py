@@ -6,19 +6,18 @@ from collections import defaultdict
 
 def get_ranking_pretty(token, N_GAMES, progress_disable=True):
     game_objs = get_past_games(token)[:N_GAMES]
-    print(f"* Retrieved {N_GAMES} game IDs")
+    print(f"- [x] Retrieved {N_GAMES} game IDs")
 
     games = []
-    print("* Downloading games...")
     with ThreadPoolExecutor(max_workers=10) as executor:
         for game in executor.map(
             lambda game_obj: fetch_game(token, game_obj["id"]), game_objs
         ):
             games.append(game)
     print()
-    print("* Downloaded all games")
+    print("- [x] Downloaded all games")
 
-    print("* Getting rankings...")
+    print("- [x] Getting rankings...")
     rankings = defaultdict(lambda: 0)
     for game in games:
         players = get_players(game)
@@ -31,7 +30,7 @@ def get_ranking_pretty(token, N_GAMES, progress_disable=True):
         k: v / N_GAMES
         for k, v in sorted(rankings.items(), key=lambda item: item[1], reverse=True)
     }
-    print(f"* Obtained rankings over {N_GAMES}:")
+    print(f"- [x] Obtained rankings over {N_GAMES} games")
     print()
     print(f"### Ranking with scores")
     print()
