@@ -530,9 +530,9 @@ function get_all_scores(me, possible_position)
     for _, player in pairs(others) do
         player_danger = player_danger + score_danger_player(me, possible_position, player)
     end
-    if number_of_players > 3 then
-        player_danger = player_danger * 3 / number_of_players
-    end
+    -- if number_of_players > 3 then
+    --     player_danger = player_danger * 3 / number_of_players
+    -- end
 
     -- Evaluate COD
     local cod_danger = score_danger_cod(me, possible_position)
