@@ -486,8 +486,18 @@ function perp_dist(our_coord, bullet_coord, bullet_direction)
     return dist
 end
 
+function adjust_smoothing()
+    if num_ticks < 2000 then
+        return 1
+    elseif num_ticks < 2500 then
+        return 0.5
+    else
+        return 0.25
+    end
+end
+
 function danger_perp_dist(dist)
-    return exp_smoothing(8, 400, dist)
+    return exp_smoothing(8 * adjust_smoothing(), 400 * adjust_smoothing(), dist)
 end
 
 function danger_bullet_proximity(our_pos, bullet)
@@ -497,7 +507,7 @@ function danger_bullet_proximity(our_pos, bullet)
         -- print("bullet is moving away")
         return 0
     else
-        return (exp_smoothing(5, 15, dist) + exp_smoothing(15, 400, dist)) * 0.5
+        return (exp_smoothing(5 * adjust_smoothing(), 15 * adjust_smoothing(), dist) + exp_smoothing(15 * adjust_smoothing(), 400 * adjust_smoothing(), dist)) * 0.5
     end
 end
 
