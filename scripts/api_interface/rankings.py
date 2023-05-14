@@ -31,13 +31,17 @@ def get_ranking_pretty(token, N_GAMES, progress_disable=True):
         k: v / N_GAMES
         for k, v in sorted(rankings.items(), key=lambda item: item[1], reverse=True)
     }
-    print(f"* Rankings over {N_GAMES} games:")
+    print(f"* Obtained rankings over {N_GAMES}:")
+    print()
+    print(f"### Ranking")
+    print()
     we_are_first = False
     for index, (player, ranking) in enumerate(sorted_rankings.items()):
         if index == 0 and player == "OutLauz":
             we_are_first = True
         if index >= 10:
             break
-        print(f"  {index+1}. {player}: {ranking*100:.1f}% wins")
+        print(f"{index+1}. {player}: {ranking*100:.1f}% wins")
     print()
     print(f"**Are we first? 🤔: {bool_to_checkmark(we_are_first)}**")
+    print()
