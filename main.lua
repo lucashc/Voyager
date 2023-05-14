@@ -412,6 +412,10 @@ local simulated_cod = 800
 function update_simulated_cod()
     local fake_time = num_ticks + 20
 
+    if fake_time > 3000 then
+        fake_time = fake_time - 18
+    end
+
     for _, cst in ipairs(COD_CONSTANTS) do
         local start, radius, _ = unpack(cst)
 
