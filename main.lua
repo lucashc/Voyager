@@ -323,19 +323,16 @@ end
 -- Evaluation --
 ----------------
 
-function base_proximity_score(position, player)
-    return exp_smoothing(2, 200, vec.distance(current_position, player.pos[1]))
-end
-
-function proximity_score(current_position, player)
-    if num_ticks<1500 then
-        return base_proximity_score(current_position, player)
-    --elseif num_ticks<2500 then
-      --  return exp_smoothing(2, 50, vec.distance(current_position, player.pos[1]))
-    else 
-        return 0
+function proximity_score(position, player)
+    if num_ticks < 1500 then
+        return exp_smoothing(2, 200, vec.distance(current_position, player.pos[1]))
+    elseif num_ticks < 2000 then
+        return exp_smoothing(2, 100, vec.distance(current_position, player.pos[1]))
+    elseif num_ticks < 2500 then
+        return exp_smoothing(2, 50, vec.distance(current_position, player.pos[1]))
+    else
+        return exp_smoothing(2, 25, vec.distance(current_position, player.pos[1]))
     end
-    
 end
 
 
@@ -565,14 +562,14 @@ end
 
 function spell_people(me)
     -- find: 1. clostest player, 2. most threatening player (hitman)
-    local distance_to_run = 3
+    local distance_to_run = 2.1
     local closest_player = nil
     local min_distance = FIELD_SIZE
     local dangerous_player = nil
     local max_danger = 0
 
     for _, player in pairs(others) do
-        local player_danger = base_proximity_score(me:pos(), player) *(1+ direction_score(me:pos(), player))
+        local player_danger = proximity_score(me:pos(), player) * (3 + direction_score(me:pos(), player))
         if player_danger>=max_danger then
             max_danger = player_danger
             dangerous_player = player
