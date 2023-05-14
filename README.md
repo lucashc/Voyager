@@ -48,4 +48,5 @@ where we only consider bullets travelling towards us, and $d(\boldsymbol{x}_C, \
     - [x] Are we in danger to be attacked with melee attacks? If so, perhaps we should dash.
     - [x] Are we in melee range? If so, perhaps we should melee
     - [x] Otherwise, shoot
+    
     Choosing the optimal player to shoot is done in a similar fashion to enemy avoidance i.e. we target enemies that we consider as dangerous.
