@@ -264,12 +264,19 @@ function update_others_bullets(me)
                     goto continue
                 end
 
-                local old_user_pos = others[owner_id].pos[2]
-                local direction = bullet_pos:sub(old_user_pos)
-                direction = normalise(direction)
+                local direction
 
-                others[owner_id].bullet_cooldown = BULLET_COOLDOWN
-                others[owner_id].bullets_spawned = others[owner_id].bullets_spawned + 1
+                if others[owner_id] ~= nil then
+                    local old_user_pos = others[owner_id].pos[2]
+                    direction = bullet_pos:sub(old_user_pos)
+
+                    others[owner_id].bullet_cooldown = BULLET_COOLDOWN
+                    others[owner_id].bullets_spawned = others[owner_id].bullets_spawned + 1
+                else
+                    direction = vec.new(0, 0)
+                end
+
+                direction = normalise(direction)
 
                 bullets[id] = {
                     position = bullet_pos,
