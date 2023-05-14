@@ -285,7 +285,7 @@ function update_others_bullets(me)
                 -- print("Adding bullet")
             -- Seen before
             else
-                bullets[id].direction = bullet_pos:sub(bullets[id].position)
+                bullets[id].direction = normalise(bullet_pos:sub(bullets[id].position))
                 bullets[id].position = bullet_pos
             end
         end
@@ -515,10 +515,12 @@ function score_danger_bullet(our_pos)
     local total_danger = 0
     -- print("entering danger_of_position")
     for _, bullet in pairs(bullets) do
-        -- print("danger_bullet_proximity" .. danger_bullet_proximity(our_pos, bullet))
-        -- print("danger_perp_dist" .. danger_perp_dist(perp_dist(our_pos, bullet.position, bullet.direction)))
-        local danger = danger_bullet_proximity(our_pos, bullet)*danger_perp_dist(perp_dist(our_pos, bullet.position, bullet.direction))
-        total_danger = total_danger + danger
+        if norm(bullet.direction) >= 0.1 then -- only consider normalized bullets
+            -- print("danger_bullet_proximity" .. danger_bullet_proximity(our_pos, bullet))
+            -- print("danger_perp_dist" .. danger_perp_dist(perp_dist(our_pos, bullet.position, bullet.direction)))
+            local danger = danger_bullet_proximity(our_pos, bullet)*danger_perp_dist(perp_dist(our_pos, bullet.position, bullet.direction))
+            total_danger = total_danger + danger
+        end
     end
     return total_danger
 end
