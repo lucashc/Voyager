@@ -398,23 +398,31 @@ function score_danger_player(me, current_position, player)
 end
 
 
-function interpolate(x1, x2, y1, y2, x)
-    return y1 + (y2 - y1) / (x2 - x1) * (x - x1)
-end
+local COD_CONSTANTS = {
+    {0, 800, 1},
+    {800, 150, 1},
+    {1500, 90, 1},
+    {2000, 40, 1},
+    {2500, 10, 1},
+    {3000, 0, 1},
+};
 
-function get_smoothed_cod(ticks)
-    if ticks < 800 then
-        return interpolate(0, 800, 500, 150, ticks)
-    elseif ticks < 1200 then
-        return interpolate(800, 1200, 150, 90, ticks)
-    elseif ticks < 1500 then
-        return interpolate(1200, 1500, 90, 40, ticks)
-    elseif ticks < 1700 then
-        return interpolate(1500, 1700, 40, 10, ticks)
-    elseif ticks < 1900 then
-        return interpolate(1700, 1900, 10, 0, ticks)
-    else
-        return 0
+local simulated_cod = 800
+
+function update_simulated_cod()
+    local fake_time = num_ticks + 20
+
+    for _, cst in ipairs(COD_CONSTANTS) do
+        local start, radius, _ = unpack(cst)
+
+        if fake_time < start then
+            break
+        end
+
+        if radius < simulated_cod then
+            simulated_cod = simulated_cod - 1
+            return
+        end
     end
 end
 
@@ -430,7 +438,12 @@ function score_danger_cod(me, current_position)
     local cod_center = vec.new(cod:x(), cod:y())
     local radius = vec.distance(current_position, cod_center)
 
-    local margin_radius = cod:radius() * 0.8
+    local margin_radius
+    if simulated_cod > 10 then
+        margin_radius = simulated_cod * 0.9
+    else
+        margin_radius = simulated_cod * 0.8
+    end
 
     return math.exp(math.max(0, radius - margin_radius) / margin_radius * 2)
 end
@@ -649,4 +662,5 @@ function bot_main(me)
 
     -- Administrative Functions
     update_others_cooldowns()
+    update_simulated_cod()
 end
